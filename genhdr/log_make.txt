@@ -1,0 +1,288 @@
+mkdir -p build/genhdr
+python3 ../../py/makeversionhdr.py build/genhdr/mpversion.h
+GEN build/genhdr/mpversion.h
+GEN build/genhdr/moduledefs.h
+python3 ../../py/makemoduledefs.py --vpath="., ../.., "  py/mpstate.c py/malloc.c py/gc.c py/pystack.c py/qstr.c py/vstr.c py/mpprint.c py/unicode.c py/mpz.c py/reader.c py/lexer.c py/parse.c py/scope.c py/compile.c py/emitcommon.c py/emitbc.c py/asmbase.c py/asmx64.c py/emitnx64.c py/asmx86.c py/emitnx86.c py/asmthumb.c py/emitnthumb.c py/emitinlinethumb.c py/asmarm.c py/emitnarm.c py/asmxtensa.c py/emitnxtensa.c py/emitinlinextensa.c py/emitnxtensawin.c py/formatfloat.c py/parsenumbase.c py/parsenum.c py/emitglue.c py/persistentcode.c py/runtime.c py/runtime_utils.c py/scheduler.c py/nativeglue.c py/pairheap.c py/ringbuf.c py/stackctrl.c py/argcheck.c py/warning.c py/profile.c py/map.c py/obj.c py/objarray.c py/objattrtuple.c py/objbool.c py/objboundmeth.c py/objcell.c py/objclosure.c py/objcomplex.c py/objdeque.c py/objdict.c py/objenumerate.c py/objexcept.c py/objfilter.c py/objfloat.c py/objfun.c py/objgenerator.c py/objgetitemiter.c py/objint.c py/objint_longlong.c py/objint_mpz.c py/objlist.c py/objmap.c py/objmodule.c py/objobject.c py/objpolyiter.c py/objproperty.c py/objnone.c py/objnamedtuple.c py/objrange.c py/objreversed.c py/objset.c py/objsingleton.c py/objslice.c py/objstr.c py/objstrunicode.c py/objstringio.c py/objtuple.c py/objtype.c py/objzip.c py/opmethods.c py/sequence.c py/stream.c py/binary.c py/builtinimport.c py/builtinevex.c py/builtinhelp.c py/modarray.c py/modbuiltins.c py/modcollections.c py/modgc.c py/modio.c py/modmath.c py/modcmath.c py/modmicropython.c py/modstruct.c py/modsys.c py/moduerrno.c py/modthread.c py/vm.c py/bc.c py/showbc.c py/repl.c py/smallint.c py/frozenmod.c extmod/moduasyncio.c extmod/moductypes.c extmod/modujson.c extmod/modure.c extmod/moduzlib.c extmod/moduheapq.c extmod/modutimeq.c extmod/moduhashlib.c extmod/moducryptolib.c extmod/modubinascii.c extmod/virtpin.c extmod/machine_bitstream.c extmod/machine_mem.c extmod/machine_pinbase.c extmod/machine_signal.c extmod/machine_pulse.c extmod/machine_i2c.c extmod/machine_spi.c extmod/modbluetooth.c extmod/modussl_axtls.c extmod/modussl_mbedtls.c extmod/modurandom.c extmod/moduselect.c extmod/moduwebsocket.c extmod/modwebrepl.c extmod/modframebuf.c extmod/vfs.c extmod/vfs_blockdev.c extmod/vfs_reader.c extmod/vfs_posix.c extmod/vfs_posix_file.c extmod/vfs_fat.c extmod/vfs_fat_diskio.c extmod/vfs_fat_file.c extmod/vfs_lfs.c extmod/utime_mphal.c extmod/uos_dupterm.c shared/libc/abort_.c shared/libc/printf.c   > build/genhdr/moduledefs.h
+GEN build/genhdr/qstr.i.last
+python3 ../../py/makeqstrdefs.py pp gcc -E output build/genhdr/qstr.i.last cflags -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -DNO_QSTR cxxflags -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1  -DNO_QSTR sources ../../py/mpstate.c ../../py/malloc.c ../../py/gc.c ../../py/pystack.c ../../py/qstr.c ../../py/vstr.c ../../py/mpprint.c ../../py/unicode.c ../../py/mpz.c ../../py/reader.c ../../py/lexer.c ../../py/parse.c ../../py/scope.c ../../py/compile.c ../../py/emitcommon.c ../../py/emitbc.c ../../py/asmbase.c ../../py/asmx64.c ../../py/emitnx64.c ../../py/asmx86.c ../../py/emitnx86.c ../../py/asmthumb.c ../../py/emitnthumb.c ../../py/emitinlinethumb.c ../../py/asmarm.c ../../py/emitnarm.c ../../py/asmxtensa.c ../../py/emitnxtensa.c ../../py/emitinlinextensa.c ../../py/emitnxtensawin.c ../../py/formatfloat.c ../../py/parsenumbase.c ../../py/parsenum.c ../../py/emitglue.c ../../py/persistentcode.c ../../py/runtime.c ../../py/runtime_utils.c ../../py/scheduler.c ../../py/nativeglue.c ../../py/pairheap.c ../../py/ringbuf.c ../../py/stackctrl.c ../../py/argcheck.c ../../py/warning.c ../../py/profile.c ../../py/map.c ../../py/obj.c ../../py/objarray.c ../../py/objattrtuple.c ../../py/objbool.c ../../py/objboundmeth.c ../../py/objcell.c ../../py/objclosure.c ../../py/objcomplex.c ../../py/objdeque.c ../../py/objdict.c ../../py/objenumerate.c ../../py/objexcept.c ../../py/objfilter.c ../../py/objfloat.c ../../py/objfun.c ../../py/objgenerator.c ../../py/objgetitemiter.c ../../py/objint.c ../../py/objint_longlong.c ../../py/objint_mpz.c ../../py/objlist.c ../../py/objmap.c ../../py/objmodule.c ../../py/objobject.c ../../py/objpolyiter.c ../../py/objproperty.c ../../py/objnone.c ../../py/objnamedtuple.c ../../py/objrange.c ../../py/objreversed.c ../../py/objset.c ../../py/objsingleton.c ../../py/objslice.c ../../py/objstr.c ../../py/objstrunicode.c ../../py/objstringio.c ../../py/objtuple.c ../../py/objtype.c ../../py/objzip.c ../../py/opmethods.c ../../py/sequence.c ../../py/stream.c ../../py/binary.c ../../py/builtinimport.c ../../py/builtinevex.c ../../py/builtinhelp.c ../../py/modarray.c ../../py/modbuiltins.c ../../py/modcollections.c ../../py/modgc.c ../../py/modio.c ../../py/modmath.c ../../py/modcmath.c ../../py/modmicropython.c ../../py/modstruct.c ../../py/modsys.c ../../py/moduerrno.c ../../py/modthread.c ../../py/vm.c ../../py/bc.c ../../py/showbc.c ../../py/repl.c ../../py/smallint.c ../../py/frozenmod.c ../../extmod/moduasyncio.c ../../extmod/moductypes.c ../../extmod/modujson.c ../../extmod/modure.c ../../extmod/moduzlib.c ../../extmod/moduheapq.c ../../extmod/modutimeq.c ../../extmod/moduhashlib.c ../../extmod/moducryptolib.c ../../extmod/modubinascii.c ../../extmod/virtpin.c ../../extmod/machine_bitstream.c ../../extmod/machine_mem.c ../../extmod/machine_pinbase.c ../../extmod/machine_signal.c ../../extmod/machine_pulse.c ../../extmod/machine_i2c.c ../../extmod/machine_spi.c ../../extmod/modbluetooth.c ../../extmod/modussl_axtls.c ../../extmod/modussl_mbedtls.c ../../extmod/modurandom.c ../../extmod/moduselect.c ../../extmod/moduwebsocket.c ../../extmod/modwebrepl.c ../../extmod/modframebuf.c ../../extmod/vfs.c ../../extmod/vfs_blockdev.c ../../extmod/vfs_reader.c ../../extmod/vfs_posix.c ../../extmod/vfs_posix_file.c ../../extmod/vfs_fat.c ../../extmod/vfs_fat_diskio.c ../../extmod/vfs_fat_file.c ../../extmod/vfs_lfs.c ../../extmod/utime_mphal.c ../../extmod/uos_dupterm.c ../../shared/libc/abort_.c ../../shared/libc/printf.c ../../py/mpconfig.h mpconfigport.h build/genhdr/moduledefs.h dependencies ../../py/mpconfig.h mpconfigport.h changed_sources ../../py/mpstate.c ../../py/malloc.c ../../py/gc.c ../../py/pystack.c ../../py/qstr.c ../../py/vstr.c ../../py/mpprint.c ../../py/unicode.c ../../py/mpz.c ../../py/reader.c ../../py/lexer.c ../../py/parse.c ../../py/scope.c ../../py/compile.c ../../py/emitcommon.c ../../py/emitbc.c ../../py/asmbase.c ../../py/asmx64.c ../../py/emitnx64.c ../../py/asmx86.c ../../py/emitnx86.c ../../py/asmthumb.c ../../py/emitnthumb.c ../../py/emitinlinethumb.c ../../py/asmarm.c ../../py/emitnarm.c ../../py/asmxtensa.c ../../py/emitnxtensa.c ../../py/emitinlinextensa.c ../../py/emitnxtensawin.c ../../py/formatfloat.c ../../py/parsenumbase.c ../../py/parsenum.c ../../py/emitglue.c ../../py/persistentcode.c ../../py/runtime.c ../../py/runtime_utils.c ../../py/scheduler.c ../../py/nativeglue.c ../../py/pairheap.c ../../py/ringbuf.c ../../py/stackctrl.c ../../py/argcheck.c ../../py/warning.c ../../py/profile.c ../../py/map.c ../../py/obj.c ../../py/objarray.c ../../py/objattrtuple.c ../../py/objbool.c ../../py/objboundmeth.c ../../py/objcell.c ../../py/objclosure.c ../../py/objcomplex.c ../../py/objdeque.c ../../py/objdict.c ../../py/objenumerate.c ../../py/objexcept.c ../../py/objfilter.c ../../py/objfloat.c ../../py/objfun.c ../../py/objgenerator.c ../../py/objgetitemiter.c ../../py/objint.c ../../py/objint_longlong.c ../../py/objint_mpz.c ../../py/objlist.c ../../py/objmap.c ../../py/objmodule.c ../../py/objobject.c ../../py/objpolyiter.c ../../py/objproperty.c ../../py/objnone.c ../../py/objnamedtuple.c ../../py/objrange.c ../../py/objreversed.c ../../py/objset.c ../../py/objsingleton.c ../../py/objslice.c ../../py/objstr.c ../../py/objstrunicode.c ../../py/objstringio.c ../../py/objtuple.c ../../py/objtype.c ../../py/objzip.c ../../py/opmethods.c ../../py/sequence.c ../../py/stream.c ../../py/binary.c ../../py/builtinimport.c ../../py/builtinevex.c ../../py/builtinhelp.c ../../py/modarray.c ../../py/modbuiltins.c ../../py/modcollections.c ../../py/modgc.c ../../py/modio.c ../../py/modmath.c ../../py/modcmath.c ../../py/modmicropython.c ../../py/modstruct.c ../../py/modsys.c ../../py/moduerrno.c ../../py/modthread.c ../../py/vm.c ../../py/bc.c ../../py/showbc.c ../../py/repl.c ../../py/smallint.c ../../py/frozenmod.c ../../extmod/moduasyncio.c ../../extmod/moductypes.c ../../extmod/modujson.c ../../extmod/modure.c ../../extmod/moduzlib.c ../../extmod/moduheapq.c ../../extmod/modutimeq.c ../../extmod/moduhashlib.c ../../extmod/moducryptolib.c ../../extmod/modubinascii.c ../../extmod/virtpin.c ../../extmod/machine_bitstream.c ../../extmod/machine_mem.c ../../extmod/machine_pinbase.c ../../extmod/machine_signal.c ../../extmod/machine_pulse.c ../../extmod/machine_i2c.c ../../extmod/machine_spi.c ../../extmod/modbluetooth.c ../../extmod/modussl_axtls.c ../../extmod/modussl_mbedtls.c ../../extmod/modurandom.c ../../extmod/moduselect.c ../../extmod/moduwebsocket.c ../../extmod/modwebrepl.c ../../extmod/modframebuf.c ../../extmod/vfs.c ../../extmod/vfs_blockdev.c ../../extmod/vfs_reader.c ../../extmod/vfs_posix.c ../../extmod/vfs_posix_file.c ../../extmod/vfs_fat.c ../../extmod/vfs_fat_diskio.c ../../extmod/vfs_fat_file.c ../../extmod/vfs_lfs.c ../../extmod/utime_mphal.c ../../extmod/uos_dupterm.c ../../shared/libc/abort_.c ../../shared/libc/printf.c ../../py/mpconfig.h mpconfigport.h build/genhdr/moduledefs.h
+GEN build/genhdr/qstr.split
+python3 ../../py/makeqstrdefs.py split qstr build/genhdr/qstr.i.last build/genhdr/qstr _
+touch build/genhdr/qstr.split
+GEN build/genhdr/qstrdefs.collected.h
+python3 ../../py/makeqstrdefs.py cat qstr _ build/genhdr/qstr build/genhdr/qstrdefs.collected.h
+QSTR updated
+GEN build/genhdr/qstrdefs.generated.h
+cat ../../py/qstrdefs.h qstrdefsport.h build/genhdr/qstrdefs.collected.h | sed 's/^Q(.*)/"&"/' | gcc -E -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 - | sed 's/^\"\(Q(.*)\)\"/\1/' > build/genhdr/qstrdefs.preprocessed.h
+python3 ../../py/makeqstrdata.py build/genhdr/qstrdefs.preprocessed.h > build/genhdr/qstrdefs.generated.h
+GEN build/genhdr/compressed.split
+python3 ../../py/makeqstrdefs.py split compress build/genhdr/qstr.i.last build/genhdr/compress _
+touch build/genhdr/compressed.split
+GEN build/genhdr/compressed.collected
+python3 ../../py/makeqstrdefs.py cat compress _ build/genhdr/compress build/genhdr/compressed.collected
+Compressed data updated
+GEN build/genhdr/compressed.data.h
+python3 ../../py/makecompresseddata.py build/genhdr/compressed.collected > build/genhdr/compressed.data.h
+mkdir -p build/build/
+mkdir -p build/extmod/
+mkdir -p build/py/
+mkdir -p build/shared/libc/
+mkdir -p build/shared/readline/
+mkdir -p build/shared/runtime/
+CC ../../py/mpstate.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/mpstate.o ../../py/mpstate.c
+CC ../../py/nlr.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/nlr.o ../../py/nlr.c
+CC ../../py/nlrx86.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -Os -c -MD -o build/py/nlrx86.o ../../py/nlrx86.c
+CC ../../py/nlrx64.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -Os -c -MD -o build/py/nlrx64.o ../../py/nlrx64.c
+CC ../../py/nlrthumb.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -Os -c -MD -o build/py/nlrthumb.o ../../py/nlrthumb.c
+CC ../../py/nlraarch64.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -Os -c -MD -o build/py/nlraarch64.o ../../py/nlraarch64.c
+CC ../../py/nlrpowerpc.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -Os -c -MD -o build/py/nlrpowerpc.o ../../py/nlrpowerpc.c
+CC ../../py/nlrxtensa.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -Os -c -MD -o build/py/nlrxtensa.o ../../py/nlrxtensa.c
+CC ../../py/nlrsetjmp.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -Os -c -MD -o build/py/nlrsetjmp.o ../../py/nlrsetjmp.c
+CC ../../py/malloc.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/malloc.o ../../py/malloc.c
+CC ../../py/gc.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -Os  -c -MD -o build/py/gc.o ../../py/gc.c
+CC ../../py/pystack.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/pystack.o ../../py/pystack.c
+CC ../../py/qstr.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/qstr.o ../../py/qstr.c
+CC ../../py/vstr.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/vstr.o ../../py/vstr.c
+CC ../../py/mpprint.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/mpprint.o ../../py/mpprint.c
+CC ../../py/unicode.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/unicode.o ../../py/unicode.c
+CC ../../py/mpz.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/mpz.o ../../py/mpz.c
+CC ../../py/reader.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/reader.o ../../py/reader.c
+CC ../../py/lexer.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/lexer.o ../../py/lexer.c
+CC ../../py/parse.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/parse.o ../../py/parse.c
+CC ../../py/scope.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/scope.o ../../py/scope.c
+CC ../../py/compile.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/compile.o ../../py/compile.c
+CC ../../py/emitcommon.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/emitcommon.o ../../py/emitcommon.c
+CC ../../py/emitbc.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/emitbc.o ../../py/emitbc.c
+CC ../../py/asmbase.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/asmbase.o ../../py/asmbase.c
+CC ../../py/asmx64.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/asmx64.o ../../py/asmx64.c
+CC ../../py/emitnx64.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/emitnx64.o ../../py/emitnx64.c
+CC ../../py/asmx86.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/asmx86.o ../../py/asmx86.c
+CC ../../py/emitnx86.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/emitnx86.o ../../py/emitnx86.c
+CC ../../py/asmthumb.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/asmthumb.o ../../py/asmthumb.c
+CC ../../py/emitnthumb.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/emitnthumb.o ../../py/emitnthumb.c
+CC ../../py/emitinlinethumb.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/emitinlinethumb.o ../../py/emitinlinethumb.c
+CC ../../py/asmarm.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/asmarm.o ../../py/asmarm.c
+CC ../../py/emitnarm.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/emitnarm.o ../../py/emitnarm.c
+CC ../../py/asmxtensa.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/asmxtensa.o ../../py/asmxtensa.c
+CC ../../py/emitnxtensa.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/emitnxtensa.o ../../py/emitnxtensa.c
+CC ../../py/emitinlinextensa.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/emitinlinextensa.o ../../py/emitinlinextensa.c
+CC ../../py/emitnxtensawin.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/emitnxtensawin.o ../../py/emitnxtensawin.c
+CC ../../py/formatfloat.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/formatfloat.o ../../py/formatfloat.c
+CC ../../py/parsenumbase.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/parsenumbase.o ../../py/parsenumbase.c
+CC ../../py/parsenum.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/parsenum.o ../../py/parsenum.c
+CC ../../py/emitglue.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/emitglue.o ../../py/emitglue.c
+CC ../../py/persistentcode.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/persistentcode.o ../../py/persistentcode.c
+CC ../../py/runtime.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/runtime.o ../../py/runtime.c
+CC ../../py/runtime_utils.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/runtime_utils.o ../../py/runtime_utils.c
+CC ../../py/scheduler.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/scheduler.o ../../py/scheduler.c
+CC ../../py/nativeglue.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/nativeglue.o ../../py/nativeglue.c
+CC ../../py/pairheap.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/pairheap.o ../../py/pairheap.c
+CC ../../py/ringbuf.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/ringbuf.o ../../py/ringbuf.c
+CC ../../py/stackctrl.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/stackctrl.o ../../py/stackctrl.c
+CC ../../py/argcheck.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/argcheck.o ../../py/argcheck.c
+CC ../../py/warning.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/warning.o ../../py/warning.c
+CC ../../py/profile.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/profile.o ../../py/profile.c
+CC ../../py/map.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/map.o ../../py/map.c
+CC ../../py/obj.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/obj.o ../../py/obj.c
+CC ../../py/objarray.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objarray.o ../../py/objarray.c
+CC ../../py/objattrtuple.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objattrtuple.o ../../py/objattrtuple.c
+CC ../../py/objbool.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objbool.o ../../py/objbool.c
+CC ../../py/objboundmeth.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objboundmeth.o ../../py/objboundmeth.c
+CC ../../py/objcell.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objcell.o ../../py/objcell.c
+CC ../../py/objclosure.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objclosure.o ../../py/objclosure.c
+CC ../../py/objcomplex.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objcomplex.o ../../py/objcomplex.c
+CC ../../py/objdeque.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objdeque.o ../../py/objdeque.c
+CC ../../py/objdict.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objdict.o ../../py/objdict.c
+CC ../../py/objenumerate.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objenumerate.o ../../py/objenumerate.c
+CC ../../py/objexcept.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objexcept.o ../../py/objexcept.c
+CC ../../py/objfilter.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objfilter.o ../../py/objfilter.c
+CC ../../py/objfloat.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objfloat.o ../../py/objfloat.c
+CC ../../py/objfun.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objfun.o ../../py/objfun.c
+CC ../../py/objgenerator.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objgenerator.o ../../py/objgenerator.c
+CC ../../py/objgetitemiter.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objgetitemiter.o ../../py/objgetitemiter.c
+CC ../../py/objint.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objint.o ../../py/objint.c
+CC ../../py/objint_longlong.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objint_longlong.o ../../py/objint_longlong.c
+CC ../../py/objint_mpz.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objint_mpz.o ../../py/objint_mpz.c
+CC ../../py/objlist.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objlist.o ../../py/objlist.c
+CC ../../py/objmap.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objmap.o ../../py/objmap.c
+CC ../../py/objmodule.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objmodule.o ../../py/objmodule.c
+CC ../../py/objobject.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objobject.o ../../py/objobject.c
+CC ../../py/objpolyiter.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objpolyiter.o ../../py/objpolyiter.c
+CC ../../py/objproperty.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objproperty.o ../../py/objproperty.c
+CC ../../py/objnone.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objnone.o ../../py/objnone.c
+CC ../../py/objnamedtuple.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objnamedtuple.o ../../py/objnamedtuple.c
+CC ../../py/objrange.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objrange.o ../../py/objrange.c
+CC ../../py/objreversed.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objreversed.o ../../py/objreversed.c
+CC ../../py/objset.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objset.o ../../py/objset.c
+CC ../../py/objsingleton.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objsingleton.o ../../py/objsingleton.c
+CC ../../py/objslice.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objslice.o ../../py/objslice.c
+CC ../../py/objstr.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objstr.o ../../py/objstr.c
+CC ../../py/objstrunicode.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objstrunicode.o ../../py/objstrunicode.c
+CC ../../py/objstringio.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objstringio.o ../../py/objstringio.c
+CC ../../py/objtuple.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objtuple.o ../../py/objtuple.c
+CC ../../py/objtype.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objtype.o ../../py/objtype.c
+CC ../../py/objzip.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/objzip.o ../../py/objzip.c
+CC ../../py/opmethods.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/opmethods.o ../../py/opmethods.c
+CC ../../py/sequence.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/sequence.o ../../py/sequence.c
+CC ../../py/stream.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/stream.o ../../py/stream.c
+CC ../../py/binary.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/binary.o ../../py/binary.c
+CC ../../py/builtinimport.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/builtinimport.o ../../py/builtinimport.c
+CC ../../py/builtinevex.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/builtinevex.o ../../py/builtinevex.c
+CC ../../py/builtinhelp.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/builtinhelp.o ../../py/builtinhelp.c
+CC ../../py/modarray.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/modarray.o ../../py/modarray.c
+CC ../../py/modbuiltins.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/modbuiltins.o ../../py/modbuiltins.c
+CC ../../py/modcollections.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/modcollections.o ../../py/modcollections.c
+CC ../../py/modgc.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/modgc.o ../../py/modgc.c
+CC ../../py/modio.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/modio.o ../../py/modio.c
+CC ../../py/modmath.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/modmath.o ../../py/modmath.c
+CC ../../py/modcmath.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/modcmath.o ../../py/modcmath.c
+CC ../../py/modmicropython.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/modmicropython.o ../../py/modmicropython.c
+CC ../../py/modstruct.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/modstruct.o ../../py/modstruct.c
+CC ../../py/modsys.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/modsys.o ../../py/modsys.c
+CC ../../py/moduerrno.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/moduerrno.o ../../py/moduerrno.c
+CC ../../py/modthread.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/modthread.o ../../py/modthread.c
+CC ../../py/vm.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -Os  -c -MD -o build/py/vm.o ../../py/vm.c
+CC ../../py/bc.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/bc.o ../../py/bc.c
+CC ../../py/showbc.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/showbc.o ../../py/showbc.c
+CC ../../py/repl.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/repl.o ../../py/repl.c
+CC ../../py/smallint.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/smallint.o ../../py/smallint.c
+CC ../../py/frozenmod.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/py/frozenmod.o ../../py/frozenmod.c
+CC main.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/main.o main.c
+CC uart_core.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/uart_core.o uart_core.c
+CC moduos.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/moduos.o moduos.c
+CC ../../shared/libc/printf.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/shared/libc/printf.o ../../shared/libc/printf.c
+CC ../../shared/readline/readline.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/shared/readline/readline.o ../../shared/readline/readline.c
+CC ../../shared/runtime/pyexec.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/shared/runtime/pyexec.o ../../shared/runtime/pyexec.c
+CC ../../shared/runtime/stdout_helpers.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/shared/runtime/stdout_helpers.o ../../shared/runtime/stdout_helpers.c
+CC ../../extmod/vfs.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/extmod/vfs.o ../../extmod/vfs.c
+MISC freezing bytecode
+../../tools/mpy-tool.py -f -q build/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none frozentest.mpy > build/_frozen_mpy.c
+CC build/_frozen_mpy.c
+gcc -m32 -I. -I../.. -Ibuild -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=c99  -Os -DNDEBUG -fdata-sections -ffunction-sections -DFFCONF_H=\"lib/oofatfs/ffconf.h\" -DMICROPY_ROM_TEXT_COMPRESSION=1 -c -MD -o build/build/_frozen_mpy.o build/_frozen_mpy.c
+LINK build/firmware.elf
+gcc -m32 -Wl,-Map=build/firmware.elf.map,--cref -Wl,--gc-sections  -o build/firmware.elf build/py/mpstate.o build/py/nlr.o build/py/nlrx86.o build/py/nlrx64.o build/py/nlrthumb.o build/py/nlraarch64.o build/py/nlrpowerpc.o build/py/nlrxtensa.o build/py/nlrsetjmp.o build/py/malloc.o build/py/gc.o build/py/pystack.o build/py/qstr.o build/py/vstr.o build/py/mpprint.o build/py/unicode.o build/py/mpz.o build/py/reader.o build/py/lexer.o build/py/parse.o build/py/scope.o build/py/compile.o build/py/emitcommon.o build/py/emitbc.o build/py/asmbase.o build/py/asmx64.o build/py/emitnx64.o build/py/asmx86.o build/py/emitnx86.o build/py/asmthumb.o build/py/emitnthumb.o build/py/emitinlinethumb.o build/py/asmarm.o build/py/emitnarm.o build/py/asmxtensa.o build/py/emitnxtensa.o build/py/emitinlinextensa.o build/py/emitnxtensawin.o build/py/formatfloat.o build/py/parsenumbase.o build/py/parsenum.o build/py/emitglue.o build/py/persistentcode.o build/py/runtime.o build/py/runtime_utils.o build/py/scheduler.o build/py/nativeglue.o build/py/pairheap.o build/py/ringbuf.o build/py/stackctrl.o build/py/argcheck.o build/py/warning.o build/py/profile.o build/py/map.o build/py/obj.o build/py/objarray.o build/py/objattrtuple.o build/py/objbool.o build/py/objboundmeth.o build/py/objcell.o build/py/objclosure.o build/py/objcomplex.o build/py/objdeque.o build/py/objdict.o build/py/objenumerate.o build/py/objexcept.o build/py/objfilter.o build/py/objfloat.o build/py/objfun.o build/py/objgenerator.o build/py/objgetitemiter.o build/py/objint.o build/py/objint_longlong.o build/py/objint_mpz.o build/py/objlist.o build/py/objmap.o build/py/objmodule.o build/py/objobject.o build/py/objpolyiter.o build/py/objproperty.o build/py/objnone.o build/py/objnamedtuple.o build/py/objrange.o build/py/objreversed.o build/py/objset.o build/py/objsingleton.o build/py/objslice.o build/py/objstr.o build/py/objstrunicode.o build/py/objstringio.o build/py/objtuple.o build/py/objtype.o build/py/objzip.o build/py/opmethods.o build/py/sequence.o build/py/stream.o build/py/binary.o build/py/builtinimport.o build/py/builtinevex.o build/py/builtinhelp.o build/py/modarray.o build/py/modbuiltins.o build/py/modcollections.o build/py/modgc.o build/py/modio.o build/py/modmath.o build/py/modcmath.o build/py/modmicropython.o build/py/modstruct.o build/py/modsys.o build/py/moduerrno.o build/py/modthread.o build/py/vm.o build/py/bc.o build/py/showbc.o build/py/repl.o build/py/smallint.o build/py/frozenmod.o build/main.o build/uart_core.o build/moduos.o build/shared/libc/printf.o build/shared/readline/readline.o build/shared/runtime/pyexec.o build/shared/runtime/stdout_helpers.o build/extmod/vfs.o build/build/_frozen_mpy.o 

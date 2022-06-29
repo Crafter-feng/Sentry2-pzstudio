@@ -4,7 +4,7 @@
 开源大师兄pzstudio青少年编程框架
 
 #### 软件架构
-pzstudio相关能力
+PZStudio相关能力
 
 
 #### 安装教程

@@ -131,7 +131,7 @@ int usr_uart_config(void)
 {
 	
     int ret; 
-    //初始化UART配置，115200，数据bit为8,停止位1，奇偶校验为NONE，流控为NONE 
+    //初始化UART配置�?115200，数据bit�?8,停止�?1，奇偶校验为NONE，流控为NONE 
     IotUartAttribute g_uart_cfg = {115200, 8, 1, IOT_UART_PARITY_NONE, 0, 0, 0}; 
     ret = IoTUartInit(IOT_UART_IDX_2, &g_uart_cfg); 
     if (ret != 0)  
@@ -358,7 +358,7 @@ void launch_python(bool isRepl){
     attr.cb_size = 0U; 
     attr.stack_mem = NULL; 
     attr.stack_size = MP_TASK_STACK_SIZE;//堆栈大小
-    attr.priority = osPriorityNormal;//优先级 
+    attr.priority = osPriorityNormal;//优先�? 
     osThreadFunc_t mpy_launch_fun = NULL;
 	if(isRepl){
 		mpy_launch_fun = micro_python_repl;
@@ -440,20 +440,20 @@ uint16_t up_file_protocal_cb(uint8_t *buf, uint16_t len){
 						//PZ_SYS_DEBUG("crc_success\r\n");
 						if(pre_id == (uint16_t)(up_file_ctrl->last_id +1)){
 							/* id接收正确 */
-							/* 将文本内容写到文本 */
+							/* 将文本内容写到文�? */
 							//PZ_SYS_DEBUG("id_success\r\n");
 							if(up_file_ctrl->fd>=0){
 								//PZ_SYS_DEBUG("id_success\r\n");
 								int ret = UtilsFileWrite(up_file_ctrl->fd,(char*)&buf[9],ctx_len);
 								if(ret < 0){
 									/* 写入错误 */
-									/* 返回写入错误数据包,总长度, */
+									/* 返回写入错误数据�?,总长�?, */
 									//PZ_SYS_DEBUG("write_error\r\n");
 									send_data[7] = 0x01;
 									
 								}else{
 									/* 写入成功 */
-									/* 返回写入成功数据包 */
+									/* 返回写入成功数据�? */
 									up_file_ctrl->last_id = pre_id;
 									//PZ_SYS_DEBUG("write_success\r\n");
 									send_data[7] = 0x00;
@@ -461,12 +461,12 @@ uint16_t up_file_protocal_cb(uint8_t *buf, uint16_t len){
 							}
 						}else{
 							/* id接收错误 */
-							/* 返回写入错误数据包 */
+							/* 返回写入错误数据�? */
 							send_data[7] = 0x01;
 						}
 					}else{
 						/* crc校验错误 */
-						/* 返回写入错误数据包 */
+						/* 返回写入错误数据�? */
 						send_data[7] = 0x01;
 					}
 					IoTUartWrite(0,send_data,0x08);
@@ -570,7 +570,7 @@ void sys_thread(){
 					board_type = uartReadBuff[0];
 				}
 				if(board_type != HARDWARE_TYPE){
-					/* 类型不正确 */
+					/* 类型不正�? */
 					printf("FF%02X",HARDWARE_TYPE);
 					continue;
 				}
@@ -624,7 +624,7 @@ void sys_thread(){
 				}else if(len > 0 && sys_mode){
 					/* 在线模式 */
 					printf(">>>");
-					/* 修改配置为在线模式 */
+					/* 修改配置为在线模�? */
 					polygon_cfg_t*sys_cfg =  get_sys_cfg();
 					sys_cfg->sys_mode = PZ_ONLINE_MODE;
 					update_sys_cfg(sys_cfg);
@@ -750,6 +750,35 @@ void MP_WEAK __assert_func(const char *file, int line, const char *func, const c
 }
 #endif
 
+#if 1
+static void *MicroPythonTask(const char *arg)
+{
+	arg = arg;
+	
+	main_entry();
+}
+
+static void MicroPythonEntry(void)
+{
+    osThreadAttr_t attr;
+
+    attr.name = "MicroPythonTask";
+    attr.attr_bits = 0U;
+    attr.cb_mem = NULL;
+    attr.cb_size = 0U;
+    attr.stack_mem = NULL;
+    attr.stack_size = 1024*40;
+    attr.priority = 20;
+
+    if (osThreadNew((osThreadFunc_t)MicroPythonTask, NULL, &attr) == NULL) {
+        printf("[MicroPythonTask] Failed to create MicroPythonTask!\n");
+    }
+}
+
+SYS_RUN(MicroPythonEntry);
+#else
 
 SYS_RUN(main_entry);
+
+#endif
 // APP_FEATURE_INIT(StartTrafficLightTask);

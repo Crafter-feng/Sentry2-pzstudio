@@ -5,11 +5,11 @@
 
 #### 软件架构
 PZStudio相关能力
-
+![PZstudio大师兄开源组件架构](mpy_mod_fun_2022_5_30_v2/image.png)
 
 #### 安装教程
 
-1.  xxxx
+1.  在下方相关链接中下载PZstudio程序安装包
 2.  xxxx
 3.  xxxx
 
@@ -27,7 +27,7 @@ PZStudio相关能力
 4.  新建 Pull Request
 
 
-#### 特技
+#### 相关链接
 1.  PZstudio下载链接 [http://www.polygonzone.com/PZStudioInstaller.zip](http://www.polygonzone.com/PZStudioInstaller.zip)
 1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
 2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)

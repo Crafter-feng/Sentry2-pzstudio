@@ -1,0 +1,8 @@
+{
+    "name":"大师兄板",
+    "namecode":"dsx",
+    "script":"dsx.py",
+    "apiPath":"api",
+    "examplePath":"examples",
+    "images":"images"
+}

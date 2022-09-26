@@ -1,14 +1,20 @@
 
-/*********************************  COPYRIGHT 2019 --------  *********  BEGIN OF FILE  ********************************/
+/*
+ * Copyright (C) 2022 Polygon Zone Open Source Organization .
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http:// www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ *
+ * limitations under the License.
+ */
 
-/**********************************************************************
-* @file           : frame.h
-* @author         : --
-* @version        : --
-* @date           : 2019-11-19
-* @brief          : frame program body
-* @Description    : --
-**********************************************************************/
 
 /* Includes  == 文件包含 --------------------------------------------*/
 #include "frame.h"
@@ -125,10 +131,10 @@ void Append_Frame_Buffer(FrameBufferStr *frame, uint8 *input, uint16 length)
 
 	i = 0;
 	
-	while(frame->head + i < frame->count)
+	//while(frame->head + i < frame->count)
 	{
 		
-		mlen = frame->ValidateFrame(frame->buffer + frame->head + i, frame->count - frame->head - i);
+		mlen = frame->ValidateFrame(frame->buffer + frame->head, frame->count - frame->head);
 		if(mlen > 0)
 		 {
 			if(mlen > frame->BUFFERLENGTH)
@@ -136,26 +142,26 @@ void Append_Frame_Buffer(FrameBufferStr *frame, uint8 *input, uint16 length)
 				frame->head = 0;
 				frame->count = 0;	
 				memset(frame->buffer, 0, frame->BUFFERLENGTH);
-				break;
+                return ;
+				//break;
 			}
-			frame->head = frame->head + i + mlen;		
+			/* 将不是 0xA5 0x5A 的数据 返回给上过滤给上一层(input) */
+			/* 将flag 置 0 */
+			frame->head = frame->head+ mlen;		
 			if(frame->head > frame->count)
 			{
 				frame->count = frame->head;
 			}
-			i = 0;
+			
 			if(frame->head == frame->count)
 			{
 				frame->head = 0;
 				frame->count = 0;	
 				memset(frame->buffer, 0, frame->BUFFERLENGTH);
-				break;
+				//break;
+                return ;
 			}
-		}
-		else
-		{
-			i++;	
-		}		
+		}	
 	}
 
 }

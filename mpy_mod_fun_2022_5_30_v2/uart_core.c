@@ -1,10 +1,31 @@
+/*
+ * Copyright (C) 2022 Polygon Zone Open Source Organization .
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http:// www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ *
+ * limitations under the License.
+ */
+
+
 #include <unistd.h>
 #include "py/mpconfig.h"
+#include "py/obj.h"
+#include "py/ringbuf.h"
 #include "los_mux.h"
+#include "pz_queue.h"
+
 /*
  * Core UART functions to implement for a port
  */
-
+#if 0
 #if MICROPY_MIN_USE_STM32_MCU
 typedef struct {
     volatile uint32_t SR;
@@ -67,3 +88,35 @@ void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
     LOS_MuxPost(uartMux);
     usleep(100); 
 }
+#endif
+
+MP_STATIC uint8_t stdin_ringbuf_array[260];
+ringbuf_t stdin_ringbuf = {stdin_ringbuf_array, sizeof(stdin_ringbuf_array), 0, 0};
+Msg_Queue_t g_uart_send_queue;
+
+
+/* 标准输入函数 */
+int mp_hal_stdin_rx_chr(void) {
+	 for (;;) {
+        int c = ringbuf_get(&stdin_ringbuf);
+        if (c != -1) {
+            return c;
+        }
+       	osDelay(1);
+    }
+}
+
+
+/* 输出函数 */
+void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
+
+	/* 将数据压入消息队列，然后一起发送 */
+	while(Queue_Residue(&g_uart_send_queue)<len){
+		osDelay(1);
+	}
+	Msg_Queue_Append_Lock(&g_uart_send_queue,(uint8_t*)str,len);
+	
+}
+
+
+

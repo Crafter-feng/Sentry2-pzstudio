@@ -13,10 +13,10 @@
 
 import("//build/lite/config/component/lite_component.gni")
 
+
 lite_component("app") {
     features = [
         "mpy_mod_fun_2022_5_30_v2/libm_port:libm_port",#math_lib
         "mpy_mod_fun_2022_5_30_v2:lib_mp",
-        
     ]
 }

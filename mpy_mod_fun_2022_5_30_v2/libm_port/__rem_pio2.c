@@ -1,5 +1,4 @@
 /*
- * Double-precision log(x) function.
  *
  * Copyright (c) 2018, Arm Limited.
  * SPDX-License-Identifier: MIT

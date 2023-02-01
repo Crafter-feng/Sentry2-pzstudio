@@ -1,4 +1,10 @@
-/* origin: FreeBSD /usr/src/lib/msun/src/k_cos.c */
+/*
+ * Double-precision log(x) function.
+ *
+ * Copyright (c) 2018, Arm Limited.
+ * SPDX-License-Identifier: MIT
+ */
+ /* origin: FreeBSD /usr/src/lib/msun/src/k_cos.c */
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.

@@ -1,3 +1,8 @@
+/*
+ *
+ * Copyright (c) 2018, Arm Limited.
+ * SPDX-License-Identifier: MIT
+ */
 /* origin: FreeBSD /usr/src/lib/msun/src/e_atan2.c */
 /*
  * ====================================================

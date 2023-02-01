@@ -1,3 +1,9 @@
+/*
+ * Double-precision log(x) function.
+ *
+ * Copyright (c) 2018, Arm Limited.
+ * SPDX-License-Identifier: MIT
+ */
 /* origin: FreeBSD /usr/src/lib/msun/src/e_rem_pio2.c */
 /*
  * ====================================================

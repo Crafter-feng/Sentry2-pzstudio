@@ -1,4 +1,9 @@
-/* origin: FreeBSD /usr/src/lib/msun/src/k_tan.c */
+/*
+ *
+ * Copyright (c) 2018, Arm Limited.
+ * SPDX-License-Identifier: MIT
+ */
+ /* origin: FreeBSD /usr/src/lib/msun/src/k_tan.c */
 /*
  * ====================================================
  * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.

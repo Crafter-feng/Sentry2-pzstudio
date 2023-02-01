@@ -1,3 +1,8 @@
+/*
+ *
+ * Copyright (c) 2018, Arm Limited.
+ * SPDX-License-Identifier: MIT
+ */
 #ifndef _LIBM_H
 #define _LIBM_H
 

@@ -132,6 +132,7 @@ static_library("lib_mp") {
         "mp_model/ext_device/extdev_ultrasonic.c",
         "mp_model/ext_device/extdev_dht11_22.c",
         "mp_model/ext_device/extdev_pm2_5.c",
+        "mp_model/ext_device/mod_Sentry.c",
         "mp_model/machine/modmachine.c",
         "mp_model/machine/machine_i2c.c",
         "mp_model/machine/machine_uart.c",

@@ -118,7 +118,7 @@ extern const struct _mp_obj_type_t   mp_type_socket;  // 注意_mp_obj_module_t�
 extern const struct _mp_obj_module_t mp_module_machine;  // 注意_mp_obj_module_t是带下划线前缀的
 extern const struct _mp_obj_module_t mp_module_device;  // 注意_mp_obj_module_t是带下划线前缀的
 extern const struct _mp_obj_module_t mp_module_ext_device;
-
+extern const struct _mp_obj_module_t mp_module_Sentry;
 
 
 
@@ -133,7 +133,7 @@ extern const struct _mp_obj_module_t mp_module_ext_device;
     {MP_ROM_QSTR(MP_QSTR_network), MP_ROM_PTR(&mp_module_network)}, \
     {MP_ROM_QSTR(MP_QSTR_socket), MP_ROM_PTR(&mp_type_socket)}, \
     {MP_ROM_QSTR(MP_QSTR_time), MP_ROM_PTR(&mp_module_time)}, \
-	
+    {MP_ROM_QSTR(MP_QSTR_Sentry),    MP_ROM_PTR(&mp_module_Sentry)},\	
 
 
 

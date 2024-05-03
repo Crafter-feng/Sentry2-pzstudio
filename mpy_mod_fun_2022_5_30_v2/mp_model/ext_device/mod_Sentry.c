@@ -25,8 +25,9 @@
 #include "machine/machine_i2c.h"
 #include "mod_Sentry.h"
 
-#define SENTRY_DEBUG_ENABLE 1
-#define LOG_OUTPUT 1
+#define SENTRY_DEBUG_ENABLE 0
+
+MP_STATIC uint8_t LOG_OUTPUT = 0;
 
 MP_STATIC const mp_rom_map_elem_t mp_sentry_obj_info_e_locals_dict_table[] = {
     {MP_ROM_QSTR(MP_QSTR_kStatus), MP_ROM_INT(1)},
@@ -234,35 +235,25 @@ typedef struct _sentry_stream_base_t
 MP_STATIC uint8_t I2CRead(mp_machine_i2c_obj_t *i2c, uint8_t dev_addr, uint8_t reg_address, uint8_t *temp)
 {
     uint32_t ret = SENTRY_OK;
-#if 1    
+
     ret = hal_pz_i2c_write(i2c->id, dev_addr, &reg_address, 1);
 
     if (ret != HI_ERR_SUCCESS)
     {
-        printf("[R:%02x, ERR W:%02x],", reg_address, ret);
+        printf("[R:%02x, ERR W:%02x addr:%02x],", reg_address, ret, dev_addr);
         return SENTRY_WRITE_TIMEOUT;
     }
-    osDelay(100);
+
     ret = hal_pz_i2c_read(i2c->id, dev_addr, temp, 1);
 
     if (ret != HI_ERR_SUCCESS)
     {
-        printf("[R:%02x, ERR R:%02x],", reg_address, ret);
-        // return SENTRY_READ_TIMEOUT;
+        printf("[R:%02x, ERR R:%02x addr:%02x],", reg_address, ret, dev_addr);
+        return SENTRY_READ_TIMEOUT;
     }
-#else
-    uint8_t buff[2] = {reg_address, 0};
-    ret = hal_pz_i2c_writeread(i2c->id, dev_addr, buff, 1, 1);
-    if (ret != HI_ERR_SUCCESS)
-    {
-        printf("[R:%02x, ERR R:%02x],", reg_address, ret);
-        // return SENTRY_READ_TIMEOUT;
-    }
-    *temp = buff[1];
-#endif
 
     // Debug Output
-#if SENTRY_DEBUG_ENABLE && LOG_OUTPUT
+#if SENTRY_DEBUG_ENABLE
     printf("[R:%02x, %02x],", reg_address, *temp);
 #endif
 
@@ -281,7 +272,7 @@ MP_STATIC uint8_t I2CWrite(mp_machine_i2c_obj_t *i2c, uint8_t dev_addr, uint8_t 
         return SENTRY_WRITE_TIMEOUT;
     }
     // Debug Output
-#if SENTRY_DEBUG_ENABLE && LOG_OUTPUT
+#if SENTRY_DEBUG_ENABLE
     printf("[W:%02x,%02x],", reg_address, value);
 #endif
     return SENTRY_OK;
@@ -377,8 +368,9 @@ MP_STATIC sentry_err_t SentryI2CStreamRead(struct _sentry_stream_base_t *self, i
                 I2CRead(self->port, self->dev_addr, kRegResultData1L + 2 * offset, (uint8_t *)(vision_state->vision_qr_result[0].str + i));
             }
             vision_state->vision_qr_result[0].str[vision_state->vision_qr_result[0].length] = 0;
+            vision_state->detect = 1;
+            break;
         }
-        break;
     }
     return SENTRY_OK;
 }
@@ -497,11 +489,11 @@ MP_STATIC bool free_vision_buffer(mp_obj_Sentry_t *self, int vision_type)
 
 MP_STATIC mp_obj_t mp_Sentry_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args)
 {
-    mp_arg_check_num(n_args, n_kw, 2, 3, false);
+    mp_arg_check_num(n_args, n_kw, 2, 2, false);
     mp_obj_Sentry_t *self = m_new_obj(mp_obj_Sentry_t);
     self->base.type = type;
-    self->address_ = 0;
-    self->device_id_ = 0;
+    self->address_ = mp_obj_get_int(args[1]);
+    self->device_id_ = mp_obj_get_int(args[0]);
     self->mode_ = kUnknownMode;
 
     return MP_OBJ_FROM_PTR(self);
@@ -511,7 +503,7 @@ MP_STATIC mp_obj_t mp_Sentry_SetDebug(mp_obj_t self_obj, mp_obj_t log_level_obj)
 {
 
     mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(self_obj);
-    mp_int_t log_level = mp_obj_get_int(log_level_obj);
+    LOG_OUTPUT = mp_obj_get_int(log_level_obj);
 
     return mp_const_none;
 }
@@ -604,13 +596,16 @@ MP_STATIC sentry_err_t mp_Sentry_GetImageShape(mp_obj_Sentry_t *self)
     return SENTRY_OK;
 }
 
-MP_STATIC mp_obj_t mp_Sentry_SensorSetDefault(mp_obj_t self_obj)
+MP_STATIC mp_obj_t mp_Sentry_SensorSetDefault(size_t n_args, const mp_obj_t *args)
 {
-
-    mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(self_obj);
+    mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(args[0]);
     mp_int_t vision_default_only = 1;
     sentry_sensor_conf_t sensor_config1;
     sentry_err_t err;
+    if (n_args == 2)
+    {
+        vision_default_only = mp_obj_get_int(args[1]);
+    }
 
     err =
         self->stream_->Get(self->stream_, kRegSensorConfig1, &sensor_config1.sensor_config_reg_value);
@@ -623,8 +618,8 @@ MP_STATIC mp_obj_t mp_Sentry_SensorSetDefault(mp_obj_t self_obj)
             self->stream_->Set(self->stream_, kRegSensorConfig1, sensor_config1.sensor_config_reg_value);
         while (sensor_config1.disable_vison)
         {
-            err = self->stream_->Set(self->stream_, kRegSensorConfig1,
-                                     sensor_config1.sensor_config_reg_value);
+            err = self->stream_->Get(self->stream_, kRegSensorConfig1,
+                                     &sensor_config1.sensor_config_reg_value);
             if (err)
                 return mp_obj_new_int(err);
         }
@@ -636,8 +631,8 @@ MP_STATIC mp_obj_t mp_Sentry_SensorSetDefault(mp_obj_t self_obj)
             self->stream_->Set(self->stream_, kRegSensorConfig1, sensor_config1.sensor_config_reg_value);
         while (sensor_config1.default_setting)
         {
-            err = self->stream_->Set(self->stream_, kRegSensorConfig1,
-                                     sensor_config1.sensor_config_reg_value);
+            err = self->stream_->Get(self->stream_, kRegSensorConfig1,
+                                     &sensor_config1.sensor_config_reg_value);
             if (err)
                 return mp_obj_new_int(err);
         }
@@ -645,14 +640,18 @@ MP_STATIC mp_obj_t mp_Sentry_SensorSetDefault(mp_obj_t self_obj)
 
     return mp_obj_new_int(err);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(mp_Sentry_SensorSetDefault_obj, mp_Sentry_SensorSetDefault);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_Sentry_SensorSetDefault_obj,1, 2, mp_Sentry_SensorSetDefault);
 
-MP_STATIC mp_obj_t mp_Sentry_SensorInit(mp_obj_t self_obj, mp_obj_t set_default_obj)
+MP_STATIC mp_obj_t mp_Sentry_SensorInit(size_t n_args, const mp_obj_t *args)
 {
-
-    mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(self_obj);
-    mp_int_t set_default = mp_obj_get_int(set_default_obj);
+    mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(args[0]);
+    mp_int_t set_default = 1;
     sentry_err_t err;
+
+    if (n_args == 2)
+    {
+        set_default = mp_obj_get_int(args[1]);
+    }
 
     if (!self->stream_)
         mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Sentry not begein!"));
@@ -668,8 +667,9 @@ MP_STATIC mp_obj_t mp_Sentry_SensorInit(mp_obj_t self_obj, mp_obj_t set_default_
         return mp_obj_new_int(err);
     if (set_default)
     {
+        mp_obj_t d_args[1] = {args[0]};
         /* Sensor set default if version is correction. */
-        err = MP_OBJ_SMALL_INT_VALUE(mp_Sentry_SensorSetDefault(self_obj));
+        err = MP_OBJ_SMALL_INT_VALUE(mp_Sentry_SensorSetDefault(sizeof(d_args) / sizeof(d_args[0]), &d_args));
         if (err)
             return mp_obj_new_int(err);
     }
@@ -680,11 +680,10 @@ MP_STATIC mp_obj_t mp_Sentry_SensorInit(mp_obj_t self_obj, mp_obj_t set_default_
 
     return mp_obj_new_int(SENTRY_OK);
 }
-MP_DEFINE_CONST_FUN_OBJ_2(mp_Sentry_SensorInit_obj, mp_Sentry_SensorInit);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_Sentry_SensorInit_obj, 1, 2, mp_Sentry_SensorInit);
 
 MP_STATIC mp_obj_t mp_Sentry_rows(mp_obj_t self_obj)
 {
-
     mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(self_obj);
 
     return mp_obj_new_int(self->img_w_);
@@ -693,17 +692,16 @@ MP_DEFINE_CONST_FUN_OBJ_1(mp_Sentry_rows_obj, mp_Sentry_rows);
 
 MP_STATIC mp_obj_t mp_Sentry_cols(mp_obj_t self_obj)
 {
-
     mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(self_obj);
 
     return mp_obj_new_int(self->img_h_);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(mp_Sentry_cols_obj, mp_Sentry_cols);
 
-MP_STATIC mp_obj_t mp_Sentry_begin(mp_obj_t self_obj, mp_obj_t communication_port_obj)
+MP_STATIC mp_obj_t mp_Sentry_begin(size_t n_args, const mp_obj_t *args)
 {
-    mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(self_obj);
-    mp_obj_base_t *communication_port = (mp_obj_base_t *)MP_OBJ_TO_PTR(communication_port_obj);
+    mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(args[0]);
+    mp_obj_base_t *communication_port = (mp_obj_base_t *)MP_OBJ_TO_PTR(args[1]);
     mp_int_t set_default = 1;
     sentry_err_t err = SENTRY_OK;
 
@@ -716,13 +714,13 @@ MP_STATIC mp_obj_t mp_Sentry_begin(mp_obj_t self_obj, mp_obj_t communication_por
                 m_free(self->stream_);
                 self->stream_ = NULL;
             }
-
+            mp_obj_t d_args[] = {args[0], set_default};
             self->stream_ = mp_SentryI2CStream_make_new(communication_port, self->address_);
-            err = MP_OBJ_SMALL_INT_VALUE(mp_Sentry_SensorInit(self_obj, mp_obj_new_int(set_default)));
+            err = MP_OBJ_SMALL_INT_VALUE(mp_Sentry_SensorInit(sizeof(d_args) / sizeof(d_args[0]), &d_args));
             if (err)
             {
-                // m_free(self->stream_);
-                // self->stream_ = NULL;
+                m_free(self->stream_);
+                self->stream_ = NULL;
                 return mp_obj_new_int(err);
             }
             self->mode_ = kI2CMode;
@@ -731,7 +729,7 @@ MP_STATIC mp_obj_t mp_Sentry_begin(mp_obj_t self_obj, mp_obj_t communication_por
 
     return mp_obj_new_int(err);
 }
-MP_DEFINE_CONST_FUN_OBJ_2(mp_Sentry_begin_obj, mp_Sentry_begin);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_Sentry_begin_obj, 2, 3, mp_Sentry_begin);
 
 MP_STATIC uint8_t VisionSetStatus(mp_obj_Sentry_t *self, int vision_type, bool enable)
 {
@@ -966,7 +964,12 @@ MP_STATIC mp_obj_t mp_Sentry_GetValue(size_t n_args, const mp_obj_t *args)
     mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(args[0]);
     mp_int_t vision_type = mp_obj_get_int(args[1]);
     mp_int_t obj_info = mp_obj_get_int(args[2]);
-    mp_int_t obj_id = mp_obj_get_int(args[3]);
+    mp_int_t obj_id = 1;
+
+    if (n_args == 4)
+    {
+        obj_id = mp_obj_get_int(args[3]);
+    }
 
     if (obj_info == kStatus)
     {
@@ -981,7 +984,7 @@ MP_STATIC mp_obj_t mp_Sentry_GetValue(size_t n_args, const mp_obj_t *args)
 
     return mp_obj_new_int(mp_Sentry_read(self, vision_type, obj_info, obj_id));
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR(mp_Sentry_GetValue_obj, 4, mp_Sentry_GetValue);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_Sentry_GetValue_obj, 3, 4, mp_Sentry_GetValue);
 
 MP_STATIC mp_obj_t mp_Sentry_VisionSetStatus(mp_obj_t self_obj, mp_obj_t vision_type_obj, mp_obj_t enable_obj)
 {
@@ -1160,7 +1163,6 @@ MP_STATIC mp_obj_t mp_Sentry_CameraSetAwb(mp_obj_t self_obj, mp_obj_t awb_obj)
 }
 MP_DEFINE_CONST_FUN_OBJ_2(mp_Sentry_CameraSetAwb_obj, mp_Sentry_CameraSetAwb);
 
-
 MP_STATIC const mp_rom_map_elem_t mp_Sentry_locals_dict_table[] = {
     {MP_ROM_QSTR(MP_QSTR_SetDebug), MP_ROM_PTR(&mp_Sentry_SetDebug_obj)},
     {MP_ROM_QSTR(MP_QSTR_rows), MP_ROM_PTR(&mp_Sentry_rows_obj)},
@@ -1208,13 +1210,6 @@ MP_STATIC const mp_rom_map_elem_t mp_module_Sentry_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_sentry2_vision_e), MP_ROM_PTR(&mp_sentry2_vision_e_type)},
     {MP_ROM_QSTR(MP_QSTR_sentry2_card_label_e), MP_ROM_PTR(&mp_sentry2_card_label_e_type)},
     {MP_ROM_QSTR(MP_QSTR_sentry_class20_label_e), MP_ROM_PTR(&mp_sentry_class20_label_e_type)},
-    {MP_ROM_QSTR(MP_QSTR_LOG_OFF), MP_ROM_INT(60)},
-    {MP_ROM_QSTR(MP_QSTR_LOG_CRITICAL), MP_ROM_INT(50)},
-    {MP_ROM_QSTR(MP_QSTR_LOG_ERROR), MP_ROM_INT(40)},
-    {MP_ROM_QSTR(MP_QSTR_LOG_WARNING), MP_ROM_INT(30)},
-    {MP_ROM_QSTR(MP_QSTR_LOG_INFO), MP_ROM_INT(20)},
-    {MP_ROM_QSTR(MP_QSTR_LOG_DEBUG), MP_ROM_INT(10)},
-    {MP_ROM_QSTR(MP_QSTR_LOG_NOTSET), MP_ROM_INT(0)},
     {MP_ROM_QSTR(MP_QSTR_Sentry), MP_ROM_PTR(&mp_Sentry_type)},
 };
 MP_STATIC MP_DEFINE_CONST_DICT(mp_module_Sentry_globals, mp_module_Sentry_globals_table);

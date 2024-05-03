@@ -25,20 +25,26 @@
 #include "machine/machine_i2c.h"
 #include "mod_Sentry.h"
 
-#define SENTRY_DEBUG_ENABLE 0
+#define SENTRY_DEBUG_ENABLE 1
+
+#if SENTRY_DEBUG_ENABLE
+#define SENTRY_DEBUG(_fmt, arg...) if (LOG_OUTPUT > 2)printf("Sentry "_fmt,##arg)
+#else
+#define SENTRY_DEBUG(_fmt, arg...)
+#endif
 
 MP_STATIC uint8_t LOG_OUTPUT = 0;
 
 MP_STATIC const mp_rom_map_elem_t mp_sentry_obj_info_e_locals_dict_table[] = {
-    {MP_ROM_QSTR(MP_QSTR_kStatus), MP_ROM_INT(1)},
-    {MP_ROM_QSTR(MP_QSTR_kXValue), MP_ROM_INT(2)},
-    {MP_ROM_QSTR(MP_QSTR_kYValue), MP_ROM_INT(3)},
-    {MP_ROM_QSTR(MP_QSTR_kWidthValue), MP_ROM_INT(4)},
-    {MP_ROM_QSTR(MP_QSTR_kHeightValue), MP_ROM_INT(5)},
-    {MP_ROM_QSTR(MP_QSTR_kLabel), MP_ROM_INT(6)},
-    {MP_ROM_QSTR(MP_QSTR_kRValue), MP_ROM_INT(7)},
-    {MP_ROM_QSTR(MP_QSTR_kGValue), MP_ROM_INT(8)},
-    {MP_ROM_QSTR(MP_QSTR_kBValue), MP_ROM_INT(9)},
+    {MP_ROM_QSTR(MP_QSTR_kStatus), MP_ROM_INT(0)},
+    {MP_ROM_QSTR(MP_QSTR_kXValue), MP_ROM_INT(1)},
+    {MP_ROM_QSTR(MP_QSTR_kYValue), MP_ROM_INT(2)},
+    {MP_ROM_QSTR(MP_QSTR_kWidthValue), MP_ROM_INT(3)},
+    {MP_ROM_QSTR(MP_QSTR_kHeightValue), MP_ROM_INT(4)},
+    {MP_ROM_QSTR(MP_QSTR_kLabel), MP_ROM_INT(5)},
+    {MP_ROM_QSTR(MP_QSTR_kRValue), MP_ROM_INT(6)},
+    {MP_ROM_QSTR(MP_QSTR_kGValue), MP_ROM_INT(7)},
+    {MP_ROM_QSTR(MP_QSTR_kBValue), MP_ROM_INT(8)},
 };
 MP_STATIC MP_DEFINE_CONST_DICT(mp_sentry_obj_info_e_locals_dict, mp_sentry_obj_info_e_locals_dict_table);
 
@@ -253,9 +259,7 @@ MP_STATIC uint8_t I2CRead(mp_machine_i2c_obj_t *i2c, uint8_t dev_addr, uint8_t r
     }
 
     // Debug Output
-#if SENTRY_DEBUG_ENABLE
-    printf("[R:%02x, %02x],", reg_address, *temp);
-#endif
+    SENTRY_DEBUG("[R:%02x, %02x],", reg_address, *temp);
 
     return SENTRY_OK;
 }
@@ -272,9 +276,8 @@ MP_STATIC uint8_t I2CWrite(mp_machine_i2c_obj_t *i2c, uint8_t dev_addr, uint8_t 
         return SENTRY_WRITE_TIMEOUT;
     }
     // Debug Output
-#if SENTRY_DEBUG_ENABLE
-    printf("[W:%02x,%02x],", reg_address, value);
-#endif
+    SENTRY_DEBUG("[W:%02x,%02x],", reg_address, value);
+
     return SENTRY_OK;
 }
 
@@ -704,6 +707,11 @@ MP_STATIC mp_obj_t mp_Sentry_begin(size_t n_args, const mp_obj_t *args)
     mp_obj_base_t *communication_port = (mp_obj_base_t *)MP_OBJ_TO_PTR(args[1]);
     mp_int_t set_default = 1;
     sentry_err_t err = SENTRY_OK;
+    
+    if (n_args == 3)
+    {
+        set_default = mp_obj_get_int(args[2]);
+    }
 
     if (MP_QSTR_I2C == communication_port->type->name)
     {
@@ -714,7 +722,9 @@ MP_STATIC mp_obj_t mp_Sentry_begin(size_t n_args, const mp_obj_t *args)
                 m_free(self->stream_);
                 self->stream_ = NULL;
             }
-            mp_obj_t d_args[] = {args[0], set_default};
+
+            mp_obj_t d_args[2] = {args[0], mp_obj_new_int(set_default)};
+
             self->stream_ = mp_SentryI2CStream_make_new(communication_port, self->address_);
             err = MP_OBJ_SMALL_INT_VALUE(mp_Sentry_SensorInit(sizeof(d_args) / sizeof(d_args[0]), &d_args));
             if (err)
@@ -802,8 +812,8 @@ MP_STATIC mp_obj_t mp_Sentry_SetParam(size_t n_args, const mp_obj_t *args)
     mp_obj_get_array(args[2], &param_array_len, &param_array);
     if (param_array_len == 5)
     {
-        param.bot_x_value = mp_obj_get_int(param_array[0]);
-        param.bot_y_value = mp_obj_get_int(param_array[1]);
+        param.top_x_value = mp_obj_get_int(param_array[0]);
+        param.top_y_value = mp_obj_get_int(param_array[1]);
         param.width = mp_obj_get_int(param_array[2]);
         param.height = mp_obj_get_int(param_array[3]);
         param.label = mp_obj_get_int(param_array[4]);

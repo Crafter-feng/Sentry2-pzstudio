@@ -23,12 +23,15 @@
 #include "py/mperrno.h"
 #include "machine/modmachine.h"
 #include "machine/machine_i2c.h"
+#include "machine/machine_uart.h"
 #include "mod_Sentry.h"
 
 #define SENTRY_DEBUG_ENABLE 1
 
 #if SENTRY_DEBUG_ENABLE
-#define SENTRY_DEBUG(_fmt, arg...) if (LOG_OUTPUT > 2)printf("Sentry "_fmt,##arg)
+#define SENTRY_DEBUG(_fmt, arg...) \
+    if (LOG_OUTPUT > 2)            \
+    printf("Sentry "_fmt, ##arg)
 #else
 #define SENTRY_DEBUG(_fmt, arg...)
 #endif
@@ -229,6 +232,7 @@ typedef struct _sentry_stream_base_t
 {
     mp_obj_base_t *port;
     uint8_t dev_addr;
+    uint8_t vision_qr;
     sentry_err_t (*Get)(struct _sentry_stream_base_t *self, const uint8_t reg_address, uint8_t *value);
     sentry_err_t (*Set)(struct _sentry_stream_base_t *self, const uint8_t reg_address, const uint8_t value);
     sentry_err_t (*SetParam)(struct _sentry_stream_base_t *self, int vision_type, sentry_object_t *param, int param_id);
@@ -356,8 +360,14 @@ MP_STATIC sentry_err_t SentryI2CStreamRead(struct _sentry_stream_base_t *self, i
         vision_state->vision_result[i].result_data5 =
             result_data_tmp[1] << 8 | result_data_tmp[0];
 
-        if (kVisionQrCode == vision_type)
+        if (self->vision_qr == vision_type)
         {
+            vision_state->vision_qr_result[0].x_value = vision_state->vision_result[i].result_data1;
+            vision_state->vision_qr_result[0].y_value = vision_state->vision_result[i].result_data2;
+            vision_state->vision_qr_result[0].width = vision_state->vision_result[i].result_data3;
+            vision_state->vision_qr_result[0].height = vision_state->vision_result[i].result_data4;
+            vision_state->vision_qr_result[0].length = vision_state->vision_result[i].result_data5;
+
             for (uint16_t i = 0; i < vision_state->vision_qr_result[0].length; ++i)
             {
                 uint8_t result_id = i / 5 + 2;
@@ -410,7 +420,7 @@ MP_STATIC sentry_err_t SentryI2CStreamWrite(struct _sentry_stream_base_t *self, 
     return err;
 }
 
-MP_STATIC sentry_stream_base_t *mp_SentryI2CStream_make_new(mp_obj_base_t *i2c, uint8_t dev_addr)
+MP_STATIC sentry_stream_base_t *mp_SentryI2CStream_make_new(mp_obj_base_t *i2c, uint8_t dev_addr, uint8_t vision_qr)
 {
     sentry_stream_base_t *self = m_new_obj(sentry_stream_base_t);
     if (self == NULL)
@@ -420,6 +430,7 @@ MP_STATIC sentry_stream_base_t *mp_SentryI2CStream_make_new(mp_obj_base_t *i2c, 
 
     self->port = i2c;
     self->dev_addr = dev_addr;
+    self->vision_qr = vision_qr;
 
     self->Get = SentryI2CStreamGet;
     self->Set = SentryI2CStreamSet;
@@ -429,11 +440,446 @@ MP_STATIC sentry_stream_base_t *mp_SentryI2CStream_make_new(mp_obj_base_t *i2c, 
 
     return self;
 }
-
 /************SentryI2CStream***************/
 
 /************SentryUARTStream**************/
-MP_STATIC sentry_stream_base_t *mp_SentryUARTStream_make_new(mp_obj_base_t *uart, uint8_t dev_addr)
+// Protocol
+#define SENTRY_PROTOC_START 0xFF
+#define SENTRY_PROTOC_END 0xED
+#define SENTRY_PROTOC_COMMADN_SET 0x01
+#define SENTRY_PROTOC_COMMADN_GET 0x02
+#define SENTRY_PROTOC_MESSAGE 0x11
+#define SENTRY_PROTOC_SET_PARAM 0x21
+#define SENTRY_PROTOC_GET_RESULT 0x23
+#define SENTRY_PROTOC_SET_RESULT 0x25
+
+/* Protocol Error Type */
+#define SENTRY_PROTOC_OK 0xE0
+#define SENTRY_PROTOC_FAIL 0xE1
+#define SENTRY_PROTOC_UNKNOWN 0xE2
+#define SENTRY_PROTOC_TIMEOUT 0xE3
+#define SENTRY_PROTOC_CHECK_ERROR 0xE4
+#define SENTRY_PROTOC_LENGTH_ERROR 0xE5
+#define SENTRY_PROTOC_UNSUPPORT_COMMAND 0xE6
+#define SENTRY_PROTOC_UNSUPPORT_REG_ADDRESS 0xE7
+#define SENTRY_PROTOC_UNSUPPORT_REG_VALUE 0xE8
+#define SENTRY_PROTOC_READ_ONLY 0xE9
+#define SENTRY_PROTOC_RESTART_ERROR 0xEA
+#define SENTRY_PROTOC_RESULT_NOT_END 0xEC
+
+#define PROTOCOL_SINGLE_BUFFER_SIZE 256
+
+typedef struct _pkg_t
+{
+    size_t len;
+    uint8_t buf[PROTOCOL_SINGLE_BUFFER_SIZE];
+} pkg_t;
+
+MP_STATIC uint32_t UartWrite(machine_uart_obj_t *port, const uint8_t *data, uint32_t len)
+{
+    int bytes_written = hal_pz_uart_write(port->uart_num, data, len);
+    if (bytes_written < 0)
+    {
+        return MP_STREAM_ERROR;
+    }
+    return bytes_written;
+}
+MP_STATIC uint32_t UartRead(machine_uart_obj_t *port, uint8_t *buf, uint32_t len)
+{
+    if (len == 0)
+    {
+        return 0;
+    }
+    unsigned int time_to_wait;
+    if (port->timeout == 0)
+    {
+        time_to_wait = 0;
+    }
+    else
+    {
+        time_to_wait = port->timeout;
+    }
+    int bytes_read = 0;
+    if (time_to_wait > 0)
+    {
+        bytes_read = hal_pz_uart_read_timeout(port->uart_num, buf, len, time_to_wait);
+    }
+    else
+    {
+        bytes_read = hal_pz_uart_read(port->uart_num, buf, len);
+    }
+    if (bytes_read <= 0)
+    {
+        return MP_STREAM_ERROR;
+    }
+    return bytes_read;
+}
+
+MP_STATIC uint8_t SentryPtotocolCheck(uint8_t *buf, size_t size)
+{
+    uint32_t sum = 0;
+    for (size_t i = 0; i < size; i++)
+    {
+        sum += buf[i];
+    }
+    return (uint8_t)(sum & 0xFF);
+}
+
+MP_STATIC uint8_t SentryPtotocolAnalysisHeadMatch(sentry_stream_base_t *self, uint8_t *buf)
+{
+    while (1)
+    {
+        size_t len = UartRead(self->port, buf, 1);
+        if (len)
+        {
+            if (buf[0] == SENTRY_PROTOC_START)
+            {
+                return SENTRY_OK;
+            }
+            else
+            {
+                continue;
+            }
+        }
+        else
+        {
+            return SENTRY_READ_TIMEOUT;
+        }
+    }
+}
+
+MP_STATIC uint8_t SentryPtotocolAnalysisBodyMatch(sentry_stream_base_t *self, uint8_t *buf)
+{
+    size_t len = UartRead(self->port, buf + 1, 1);
+    if (len)
+    {
+        len = UartRead(self->port, buf + 2, buf[1] - 2);
+        if (len == (buf[1] - 2))
+        {
+            if (buf[buf[1] - 1] != SENTRY_PROTOC_END)
+            {
+                // not end with 0xED
+                return SENTRY_FAIL;
+            }
+            if (buf[buf[1] - 2] != SentryPtotocolCheck(buf, buf[1] - 2))
+            {
+                // check error
+                return SENTRY_CHECK_ERROR;
+            }
+            return SENTRY_OK;
+        }
+        else
+        {
+            // not enough data or data lost
+            return SENTRY_READ_TIMEOUT;
+        }
+    }
+    else
+    {
+        return SENTRY_READ_TIMEOUT;
+    }
+}
+
+MP_STATIC uint8_t SentryPtotocolReceive(sentry_stream_base_t *self, pkg_t *data_buf)
+{
+    uint8_t *buf = data_buf->buf;
+
+    // get protocol head
+    uint8_t err = SentryPtotocolAnalysisHeadMatch(self, buf);
+    // get protocol body
+    if (!err)
+    {
+        err = SentryPtotocolAnalysisBodyMatch(self, buf);
+    }
+    if (err)
+    {
+        return err;
+    }
+
+    data_buf->len = buf[1] - 5;
+    memcpy(buf, buf + 3, data_buf->len);
+
+    return err;
+}
+
+MP_STATIC uint8_t SentryPtotocolTransmit(sentry_stream_base_t *self, const pkg_t *pkg)
+{
+    if (pkg->len + 5 > PROTOCOL_SINGLE_BUFFER_SIZE)
+    {
+        return SENTRY_FAIL;
+    } // buffer too large
+    uint8_t buffer[PROTOCOL_SINGLE_BUFFER_SIZE];
+    buffer[0] = SENTRY_PROTOC_START;
+    buffer[1] = 5 + pkg->len;
+    buffer[2] = self->dev_addr;
+    memcpy(buffer + 3, pkg->buf, pkg->len);
+    buffer[3 + pkg->len] = SentryPtotocolCheck(buffer, buffer[1] - 2);
+    buffer[4 + pkg->len] = SENTRY_PROTOC_END;
+    UartWrite(self->port, buffer, buffer[1]);
+    return SENTRY_OK;
+}
+
+MP_STATIC sentry_err_t SentryUartMethodGet(sentry_stream_base_t *self, const uint8_t reg_address, uint8_t *value)
+{
+    pkg_t pkg = {2, {SENTRY_PROTOC_COMMADN_GET, reg_address}};
+    sentry_err_t err;
+    err = SentryPtotocolTransmit(self, &pkg);
+    if (err)
+    {
+        return err;
+    }
+    uint8_t try_time = 0;
+    for (;;)
+    {
+        err = SentryPtotocolReceive(self, &pkg);
+        if (err)
+        {
+            return err;
+        }
+
+        if (pkg.buf[0] == SENTRY_PROTOC_OK &&
+            pkg.buf[1] == SENTRY_PROTOC_COMMADN_GET)
+        {
+            *value = pkg.buf[2];
+            return SENTRY_OK;
+        }
+        else
+        {
+            return pkg.buf[0];
+        }
+
+        try_time++;
+        if (try_time > 3)
+        {
+            return SENTRY_READ_TIMEOUT;
+        }
+    }
+    return SENTRY_OK;
+}
+
+MP_STATIC sentry_err_t SentryUartMethodSet(sentry_stream_base_t *self, const uint8_t reg_address, const uint8_t value)
+{
+    pkg_t pkg = {3, {SENTRY_PROTOC_COMMADN_SET, reg_address, value}};
+    sentry_err_t err;
+    err = SentryPtotocolTransmit(self, &pkg);
+    if (err)
+        return err;
+    uint8_t try_time = 0;
+    for (;;)
+    {
+        try_time++;
+        if (try_time > 3)
+        {
+            return SENTRY_READ_TIMEOUT;
+        }
+        err = SentryPtotocolReceive(self, &pkg);
+        if (err)
+        {
+            return err;
+        }
+
+        if (pkg.buf[1] != SENTRY_PROTOC_COMMADN_SET ||
+            pkg.buf[2] != reg_address)
+        {
+            /* Not the return of CMD SET! */
+            continue;
+        }
+        if (SENTRY_PROTOC_OK == pkg.buf[0])
+        {
+            return SENTRY_OK;
+        }
+        return pkg.buf[0];
+    }
+    return SENTRY_OK;
+}
+
+MP_STATIC sentry_err_t SentryUartStreamSetParam(struct _sentry_stream_base_t *self, int vision_type, sentry_object_t *param, int param_id)
+{
+    sentry_err_t err = SENTRY_OK;
+    int try_time = 0;
+
+    pkg_t pkg;
+    pkg.len = 14;
+    pkg.buf[0] = SENTRY_PROTOC_SET_PARAM;
+    pkg.buf[1] = vision_type;
+    pkg.buf[2] = (uint8_t)param_id;
+    pkg.buf[3] = (uint8_t)param_id;
+    pkg.buf[4] = (param->result_data1 >> 8) & 0xFF;
+    pkg.buf[5] = param->result_data1 & 0xFF;
+    pkg.buf[6] = (param->result_data2 >> 8) & 0xFF;
+    pkg.buf[7] = param->result_data2 & 0xFF;
+    pkg.buf[8] = (param->result_data3 >> 8) & 0xFF;
+    pkg.buf[9] = param->result_data3 & 0xFF;
+    pkg.buf[10] = (param->result_data4 >> 8) & 0xFF;
+    pkg.buf[11] = param->result_data4 & 0xFF;
+    pkg.buf[12] = (param->result_data5 >> 8) & 0xFF;
+    pkg.buf[13] = param->result_data5 & 0xFF;
+
+    err = SentryPtotocolTransmit(self, &pkg);
+    if (err)
+        return err;
+    for (;;)
+    {
+        err = SentryPtotocolReceive(self, &pkg);
+        if (err)
+            return err;
+
+        if (pkg.buf[0] == SENTRY_PROTOC_OK)
+        {
+            if (pkg.buf[1] == SENTRY_PROTOC_SET_PARAM)
+            {
+                return SENTRY_OK;
+            }
+            else
+            {
+                return SENTRY_UNSUPPORT_PARAM;
+            }
+        }
+        return pkg.buf[0];
+
+        try_time++;
+        if (try_time > 3)
+        {
+            return SENTRY_READ_TIMEOUT;
+        }
+    }
+
+    return err;
+}
+
+MP_STATIC sentry_err_t SentryUartMethodRead(struct _sentry_stream_base_t *self, int vision_type, sentry_vision_state_t *vision_state)
+{
+    int try_time = 0;
+    sentry_err_t err = SENTRY_OK;
+    pkg_t pkg = {4, {SENTRY_PROTOC_GET_RESULT, (uint8_t)vision_type, 1, SENTRY_MAX_RESULT}};
+    vision_state->detect = 0;
+    err = SentryPtotocolTransmit(self, &pkg);
+    if (err)
+        return err;
+    for (;;)
+    {
+        err = SentryPtotocolReceive(self, &pkg);
+        if (err)
+            return err;
+
+        if (pkg.buf[0] == SENTRY_PROTOC_OK ||
+            pkg.buf[0] == SENTRY_PROTOC_RESULT_NOT_END ||
+            pkg.buf[3] == vision_type)
+        {
+            if (pkg.buf[1] == SENTRY_PROTOC_GET_RESULT)
+            {
+                vision_state->frame = pkg.buf[2];
+                uint8_t start_id = pkg.buf[4];
+                uint8_t stop_id = pkg.buf[5];
+                uint8_t *presult = &pkg.buf[6];
+                if (stop_id == 0)
+                    return SENTRY_OK;
+                for (uint8_t i = start_id - 1, j = 0; i < stop_id; i++, j++)
+                {
+                    vision_state->vision_result[i].x_value =
+                        presult[10 * j + 0] << 8 | presult[10 * j + 1];
+                    vision_state->vision_result[i].y_value =
+                        presult[10 * j + 2] << 8 | presult[10 * j + 3];
+                    vision_state->vision_result[i].width =
+                        presult[10 * j + 4] << 8 | presult[10 * j + 5];
+                    vision_state->vision_result[i].height =
+                        presult[10 * j + 6] << 8 | presult[10 * j + 7];
+                    vision_state->vision_result[i].label =
+                        presult[10 * j + 8] << 8 | presult[10 * j + 9];
+                    vision_state->detect++;
+                }
+
+                if (self->vision_qr == vision_type)
+                {
+                    vision_state->vision_qr_result[0].x_value = vision_state->vision_result[0].result_data1;
+                    vision_state->vision_qr_result[0].y_value = vision_state->vision_result[0].result_data2;
+                    vision_state->vision_qr_result[0].width = vision_state->vision_result[0].result_data3;
+                    vision_state->vision_qr_result[0].height = vision_state->vision_result[0].result_data4;
+                    vision_state->vision_qr_result[0].length = vision_state->vision_result[0].result_data5;
+
+                    for (uint16_t i = 0; i < vision_state->vision_qr_result[0].length; ++i)
+                    {
+                        vision_state->vision_qr_result[0].str[i] = presult[11 + 2 * i];
+                    }
+
+                    vision_state->vision_qr_result[0].str[vision_state->vision_qr_result[0].length] = 0;
+                }
+
+                if (pkg.buf[0] == SENTRY_PROTOC_OK)
+                {
+                    return SENTRY_OK;
+                }
+                else
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                SENTRY_DEBUG("Error command: 0x%x\n", pkg.buf[1]);
+                return SENTRY_UNSUPPORT_PARAM;
+            }
+        }
+        else
+        {
+            return SENTRY_UNSUPPORT_PARAM;
+        }
+
+        try_time++;
+        if (try_time > 3)
+        {
+            return SENTRY_READ_TIMEOUT;
+        }
+    }
+    return SENTRY_OK;
+}
+
+MP_STATIC sentry_err_t SentryUARTStreamWrite(struct _sentry_stream_base_t *self, int vision_type, const sentry_vision_state_t *vision_state)
+{
+    sentry_err_t err = SENTRY_OK;
+    pkg_t pkg;
+
+    for (size_t i = 0; i < vision_state->detect; i++)
+    {
+        pkg.buf[0] = SENTRY_PROTOC_SET_RESULT;
+        pkg.buf[1] = vision_type;
+        pkg.buf[2] = i + 1;
+        pkg.buf[3] = i + 1;
+        pkg.buf[4] = (vision_state->vision_result[i].result_data1 >> 8) & 0xFF;
+        pkg.buf[5] = vision_state->vision_result[i].result_data1 & 0xFF;
+        pkg.buf[6] = (vision_state->vision_result[i].result_data2 >> 8) & 0xFF;
+        pkg.buf[7] = vision_state->vision_result[i].result_data2 & 0xFF;
+        pkg.buf[8] = (vision_state->vision_result[i].result_data3 >> 8) & 0xFF;
+        pkg.buf[9] = vision_state->vision_result[i].result_data3 & 0xFF;
+        pkg.buf[10] = (vision_state->vision_result[i].result_data4 >> 8) & 0xFF;
+        pkg.buf[11] = vision_state->vision_result[i].result_data4 & 0xFF;
+        pkg.buf[12] = (vision_state->vision_result[i].result_data5 >> 8) & 0xFF;
+        pkg.buf[13] = vision_state->vision_result[i].result_data5 & 0xFF;
+        pkg.len = 14;
+        err = SentryPtotocolTransmit(self, &pkg);
+        if (err)
+            return err;
+        err = SentryPtotocolReceive(self, &pkg);
+        if (err)
+            return err;
+        /* TODO: 此处未考虑总线设备接收到其他传感器指令的情况，应读取多次 */
+
+        if (3 == pkg.len && SENTRY_PROTOC_OK == pkg.buf[0] &&
+            SENTRY_PROTOC_SET_RESULT == pkg.buf[1] &&
+            vision_type == pkg.buf[2])
+        {
+            return err;
+        }
+        else
+        {
+            return SENTRY_FAIL;
+        }
+    }
+
+    return err;
+}
+
+MP_STATIC sentry_stream_base_t *mp_SentryUARTStream_make_new(mp_obj_base_t *uart, uint8_t dev_addr, uint8_t vision_qr)
 {
     sentry_stream_base_t *self = m_new_obj(sentry_stream_base_t);
     if (self == NULL)
@@ -443,12 +889,13 @@ MP_STATIC sentry_stream_base_t *mp_SentryUARTStream_make_new(mp_obj_base_t *uart
 
     self->port = uart;
     self->dev_addr = dev_addr;
+    self->vision_qr = vision_qr;
 
-    // self->Get = ;
-    // self->Set = ;
-    // self->SetParam = ;
-    // self->Read = ;
-    // self->Write = ;
+    self->Get = SentryUartMethodGet;
+    self->Set = SentryUartMethodSet;
+    self->SetParam = SentryI2CStreamSetParam;
+    self->Read = SentryUartMethodRead;
+    self->Write = SentryUARTStreamWrite;
 
     return self;
 }
@@ -460,6 +907,8 @@ typedef struct _mp_obj_Sentry_t
     sentry_mode_e mode_;
     uint8_t device_id_;
     uint8_t address_;
+    uint8_t vision_qr_;
+    uint8_t vision_max_;
     uint16_t img_w_;
     uint16_t img_h_;
     sentry_stream_base_t *stream_;
@@ -490,13 +939,31 @@ MP_STATIC bool free_vision_buffer(mp_obj_Sentry_t *self, int vision_type)
     return true;
 }
 
+MP_STATIC mp_obj_t mp_Sentry_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+    mp_obj_Sentry_t *self = MP_OBJ_TO_PTR(self_in);
+
+    mp_printf(print, "Sentry(addr: 0x%x, id: 0x%x, qr: %d, max: %d)",
+              self->address_, self->device_id_, self->vision_qr_, self->vision_max_);
+}
+
 MP_STATIC mp_obj_t mp_Sentry_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args)
 {
-    mp_arg_check_num(n_args, n_kw, 2, 2, false);
+    mp_arg_check_num(n_args, n_kw, 2, 4, false);
     mp_obj_Sentry_t *self = m_new_obj(mp_obj_Sentry_t);
     self->base.type = type;
     self->address_ = mp_obj_get_int(args[1]);
     self->device_id_ = mp_obj_get_int(args[0]);
+    if (n_args == 4)
+    {
+        self->vision_qr_ = mp_obj_get_int(args[2]);
+        self->vision_max_ = mp_obj_get_int(args[3]);
+    }
+    else
+    {
+        self->vision_qr_ = kVisionQrCode;
+        self->vision_max_ = kVisionMaxType;
+    }
+
     self->mode_ = kUnknownMode;
 
     return MP_OBJ_FROM_PTR(self);
@@ -643,7 +1110,7 @@ MP_STATIC mp_obj_t mp_Sentry_SensorSetDefault(size_t n_args, const mp_obj_t *arg
 
     return mp_obj_new_int(err);
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_Sentry_SensorSetDefault_obj,1, 2, mp_Sentry_SensorSetDefault);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_Sentry_SensorSetDefault_obj, 1, 2, mp_Sentry_SensorSetDefault);
 
 MP_STATIC mp_obj_t mp_Sentry_SensorInit(size_t n_args, const mp_obj_t *args)
 {
@@ -701,13 +1168,45 @@ MP_STATIC mp_obj_t mp_Sentry_cols(mp_obj_t self_obj)
 }
 MP_DEFINE_CONST_FUN_OBJ_1(mp_Sentry_cols_obj, mp_Sentry_cols);
 
+MP_STATIC mp_obj_t mp_Sentry_Set(mp_obj_t self_obj, mp_obj_t reg_address_obj, mp_obj_t value_obj)
+{
+    mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(self_obj);
+
+    uint8_t reg_address = mp_obj_get_int(reg_address_obj);
+    uint8_t value = mp_obj_get_int(value_obj);
+
+    sentry_err_t err = self->stream_->Set(self->stream_, reg_address, value);
+
+    return mp_obj_new_int(err);
+}
+MP_DEFINE_CONST_FUN_OBJ_3(mp_Sentry_Set_obj, mp_Sentry_Set);
+
+MP_STATIC mp_obj_t mp_Sentry_Get(mp_obj_t self_obj, mp_obj_t reg_address_obj)
+{
+    mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(self_obj);
+
+    uint8_t reg_address = mp_obj_get_int(reg_address_obj);
+    uint8_t reg_value = 0;
+
+    sentry_err_t err =
+        self->stream_->Get(self->stream_, reg_address, &reg_value);
+    if (err)
+    {
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Sentry Get reg failed!"));
+        return mp_obj_new_int(err);
+    }
+
+    return mp_obj_new_int(reg_value);
+}
+MP_DEFINE_CONST_FUN_OBJ_2(mp_Sentry_Get_obj, mp_Sentry_Get);
+
 MP_STATIC mp_obj_t mp_Sentry_begin(size_t n_args, const mp_obj_t *args)
 {
     mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(args[0]);
     mp_obj_base_t *communication_port = (mp_obj_base_t *)MP_OBJ_TO_PTR(args[1]);
     mp_int_t set_default = 1;
     sentry_err_t err = SENTRY_OK;
-    
+
     if (n_args == 3)
     {
         set_default = mp_obj_get_int(args[2]);
@@ -722,18 +1221,37 @@ MP_STATIC mp_obj_t mp_Sentry_begin(size_t n_args, const mp_obj_t *args)
                 m_free(self->stream_);
                 self->stream_ = NULL;
             }
-
-            mp_obj_t d_args[2] = {args[0], mp_obj_new_int(set_default)};
-
-            self->stream_ = mp_SentryI2CStream_make_new(communication_port, self->address_);
-            err = MP_OBJ_SMALL_INT_VALUE(mp_Sentry_SensorInit(sizeof(d_args) / sizeof(d_args[0]), &d_args));
-            if (err)
+            self->stream_ = mp_SentryI2CStream_make_new(communication_port, self->address_, self->vision_qr_);
+            self->mode_ = kI2CMode;
+        }
+    }
+    else if (MP_QSTR_UART == communication_port->type->name)
+    {
+        if (self->mode_ != kSerialMode)
+        {
+            if (self->stream_)
             {
                 m_free(self->stream_);
                 self->stream_ = NULL;
-                return mp_obj_new_int(err);
             }
-            self->mode_ = kI2CMode;
+            self->stream_ = mp_SentryUARTStream_make_new(communication_port, self->address_, self->vision_qr_);
+            self->mode_ = kSerialMode;
+        }
+    }
+    else
+    {
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Sentry not support this port!"));
+    }
+
+    if (self->mode_ != kUnknownMode)
+    {
+        mp_obj_t d_args[2] = {args[0], mp_obj_new_int(set_default)};
+        err = MP_OBJ_SMALL_INT_VALUE(mp_Sentry_SensorInit(sizeof(d_args) / sizeof(d_args[0]), &d_args));
+        if (err)
+        {
+            m_free(self->stream_);
+            self->stream_ = NULL;
+            return mp_obj_new_int(err);
         }
     }
 
@@ -1067,9 +1585,9 @@ MP_DEFINE_CONST_FUN_OBJ_2(mp_Sentry_VisionGetStatus_obj, mp_Sentry_VisionGetStat
 MP_STATIC mp_obj_t mp_Sentry_GetQrCodeValue(mp_obj_t self_obj)
 {
     mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(self_obj);
-    if (self->vision_state_[kVisionQrCode - 1] != NULL)
+    if (self->vision_state_[self->vision_qr_ - 1] != NULL)
     {
-        const char *str = self->vision_state_[kVisionQrCode - 1]->vision_qr_result[0].str;
+        const char *str = self->vision_state_[self->vision_qr_ - 1]->vision_qr_result[0].str;
         return mp_obj_new_str(str, strlen(str));
     }
 
@@ -1173,10 +1691,257 @@ MP_STATIC mp_obj_t mp_Sentry_CameraSetAwb(mp_obj_t self_obj, mp_obj_t awb_obj)
 }
 MP_DEFINE_CONST_FUN_OBJ_2(mp_Sentry_CameraSetAwb_obj, mp_Sentry_CameraSetAwb);
 
+// Uart functions
+MP_STATIC mp_obj_t mp_Sentry_UartSetBaudrate(mp_obj_t self_obj, mp_obj_t baud_obj)
+{
+    sentry_err_t err;
+    sentry_uart_conf_t uart_config;
+
+    mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(self_obj);
+    sentry_baudrate_e baud = mp_obj_get_int(baud_obj);
+
+    if (!self->stream_)
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Sentry not begein!"));
+        
+    err = self->stream_->Get(self->stream_, kRegUart, &uart_config.uart_reg_value);
+    if (uart_config.baudrate != baud)
+    {
+        uart_config.baudrate = baud;
+        self->stream_->Set(self->stream_, kRegUart, uart_config.uart_reg_value);
+    }
+    return mp_obj_new_int(err);
+}
+MP_DEFINE_CONST_FUN_OBJ_2(mp_Sentry_UartSetBaudrate_obj, mp_Sentry_UartSetBaudrate);
+
+MP_STATIC mp_obj_t mp_Sentry_Snapshot(size_t n_args, const mp_obj_t *args)
+{
+    sentry_err_t err;
+    sentry_snapshot_conf_t reg;
+
+    mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(args[0]);
+    mp_int_t image_src = mp_obj_get_int(args[1]);
+    mp_int_t image_dest = mp_obj_get_int(args[2]);
+    mp_int_t image_type = mp_obj_get_int(args[3]);
+
+    if (self->mode_ != kSerialMode)
+    {
+        return SENTRY_FAIL;
+    }
+
+    if (!self->stream_)
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Sentry not begein!"));
+        
+    err = self->stream_->Get(self->stream_, kRegSnapshot, &reg.value);
+    if (err)
+    {
+        return err;
+    }
+    reg.value &= 0xF0;
+    reg.value |= image_dest;
+    reg.source = image_src;
+    reg.image_type = image_type;
+
+    err = self->stream_->Set(self->stream_, kRegSnapshot, reg.value);
+
+    return mp_obj_new_int(err);
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR(mp_Sentry_Snapshot_obj, 4, mp_Sentry_Snapshot);
+// Screen functions
+MP_STATIC mp_obj_t mp_Sentry_UserImageCoordinateConfig(size_t n_args, const mp_obj_t *args)
+{
+    sentry_err_t err;
+
+    if (n_args != 6)
+    {
+        mp_raise_ValueError("Wrong number of arguments");
+    }
+
+    mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(args[0]);
+    mp_int_t image_id = mp_obj_get_int(args[1]);
+    mp_int_t x_value = mp_obj_get_int(args[2]);
+    mp_int_t y_value = mp_obj_get_int(args[3]);
+    mp_int_t width = mp_obj_get_int(args[4]);
+    mp_int_t height = mp_obj_get_int(args[5]);
+
+    if (!self->stream_)
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Sentry not begein!"));
+        
+    err = self->stream_->Set(self->stream_, kRegImageID, image_id);
+    if (err)
+        return mp_obj_new_int(err);
+    err = self->stream_->Set(self->stream_, kRegImageXL, x_value & 0xFF);
+    if (err)
+        return mp_obj_new_int(err);
+    err = self->stream_->Set(self->stream_, kRegImageXH, (x_value >> 8) & 0xFF);
+    if (err)
+        return mp_obj_new_int(err);
+    err = self->stream_->Set(self->stream_, kRegImageYL, y_value & 0xFF);
+    if (err)
+        return mp_obj_new_int(err);
+    err = self->stream_->Set(self->stream_, kRegImageYH, (y_value >> 8) & 0xFF);
+    if (err)
+        return mp_obj_new_int(err);
+    err = self->stream_->Set(self->stream_, kRegImageWidthL, width & 0xFF);
+    if (err)
+        return mp_obj_new_int(err);
+    err = self->stream_->Set(self->stream_, kRegImageWidthH, (width >> 8) & 0xFF);
+    if (err)
+        return mp_obj_new_int(err);
+    err = self->stream_->Set(self->stream_, kRegImageHeightL, height & 0xFF);
+    if (err)
+        return mp_obj_new_int(err);
+    err = self->stream_->Set(self->stream_, kRegImageHeightH, (height >> 8) & 0xFF);
+
+    return mp_obj_new_int(err);
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR(mp_Sentry_UserImageCoordinateConfig_obj, 6, mp_Sentry_UserImageCoordinateConfig);
+MP_STATIC mp_obj_t mp_Sentry_ScreenConfig(mp_obj_t self_obj, mp_obj_t enable_obj, mp_obj_t only_user_image_obj)
+{
+    sentry_err_t err;
+    sentry_screen_conf_t reg;
+
+    mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(self_obj);
+    mp_int_t enable = mp_obj_get_int(enable_obj);
+    mp_int_t only_user_image = mp_obj_get_int(only_user_image_obj);
+
+    reg.enable = enable;
+    reg.only_user_image = only_user_image;
+    
+    if (!self->stream_)
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Sentry not begein!"));
+
+    err = self->stream_->Set(self->stream_, kRegScreenConfig, reg.value);
+
+    return mp_obj_new_int(err);
+}
+MP_DEFINE_CONST_FUN_OBJ_3(mp_Sentry_ScreenConfig_obj, mp_Sentry_ScreenConfig);
+
+MP_STATIC mp_obj_t mp_Sentry_ScreenShow(mp_obj_t self_obj, mp_obj_t image_id_obj, mp_obj_t auto_reload_obj)
+{
+    sentry_err_t err;
+    sentry_image_conf_t reg;
+
+    mp_obj_Sentry_t *self = (mp_obj_t *)MP_OBJ_TO_PTR(self_obj);
+    mp_int_t image_id = mp_obj_get_int(image_id_obj);
+    mp_int_t auto_reload = mp_obj_get_int(auto_reload_obj);
+
+    if (!self->stream_)
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Sentry not begein!"));
+        
+    err = self->stream_->Set(self->stream_, kRegImageID, image_id);
+    if (err)
+        return mp_obj_new_int(err);
+    do
+    {
+        /* Waiting for screen to be ready */
+        err = self->stream_->Get(self->stream_, kRegImageConfig, &reg.value);
+        if (err)
+            return mp_obj_new_int(err);
+    } while (reg.ready);
+    reg.show = 1;
+    reg.source = 1;
+    reg.ready = 1;
+    reg.auto_reload = auto_reload;
+    err = self->stream_->Set(self->stream_, kRegImageConfig, reg.value);
+
+    return mp_obj_new_int(err);
+}
+MP_DEFINE_CONST_FUN_OBJ_3(mp_Sentry_ScreenShow_obj, mp_Sentry_ScreenShow);
+
+MP_STATIC mp_obj_t mp_Sentry_ScreenShowFromFlash(mp_obj_t self_obj, mp_obj_t image_id_obj,
+                                                 mp_obj_t auto_reload_obj)
+{
+    sentry_err_t err;
+    sentry_image_conf_t reg;
+
+    mp_obj_Sentry_t *self = (mp_obj_t *)MP_OBJ_TO_PTR(self_obj);
+    mp_int_t image_id = mp_obj_get_int(image_id_obj);
+    mp_int_t auto_reload = mp_obj_get_int(auto_reload_obj);
+
+    if (!self->stream_)
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Sentry not begein!"));
+        
+    err = self->stream_->Set(self->stream_, kRegImageID, image_id);
+    if (err)
+        return mp_obj_new_int(err);
+    do
+    {
+        /* Waiting for screen to be ready */
+        err = self->stream_->Get(self->stream_, kRegImageConfig, &reg.value);
+        if (err)
+            return mp_obj_new_int(err);
+    } while (reg.ready);
+    reg.show = 1;
+    reg.source = 0;
+    reg.ready = 1;
+    reg.auto_reload = auto_reload;
+    err = self->stream_->Set(self->stream_, kRegImageConfig, reg.value);
+
+    return mp_obj_new_int(err);
+}
+MP_DEFINE_CONST_FUN_OBJ_3(mp_Sentry_ScreenShowFromFlash_obj, mp_Sentry_ScreenShowFromFlash);
+
+MP_STATIC mp_obj_t mp_Sentry_ScreenFill(size_t n_args, const mp_obj_t *args)
+{
+    sentry_err_t err;
+    sentry_image_conf_t reg;
+
+    if (n_args != 6)
+    {
+        mp_raise_ValueError("Wrong number of arguments");
+    }
+
+    mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(args[0]);
+    mp_int_t image_id = mp_obj_get_int(args[1]);
+    mp_int_t r = mp_obj_get_int(args[2]);
+    mp_int_t g = mp_obj_get_int(args[3]);
+    mp_int_t b = mp_obj_get_int(args[4]);
+    mp_int_t auto_reload = mp_obj_get_int(args[5]);
+
+    if (r > 255 || g > 255 || b > 255)
+    {
+        return mp_obj_new_int(SENTRY_FAIL);
+    }
+    
+    if (!self->stream_)
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Sentry not begein!"));
+
+
+    err = self->stream_->Set(self->stream_, kRegImageID, image_id);
+    if (err)
+        return mp_obj_new_int(err);
+    err = self->stream_->Set(self->stream_, kRegScreenFillR, r);
+    if (err)
+        return mp_obj_new_int(err);
+    err = self->stream_->Set(self->stream_, kRegScreenFillG, g);
+    if (err)
+        return mp_obj_new_int(err);
+    err = self->stream_->Set(self->stream_, kRegScreenFillB, b);
+    if (err)
+        return mp_obj_new_int(err);
+    do
+    {
+        /* Waiting for screen to be ready */
+        err = self->stream_->Get(self->stream_, kRegImageConfig, &reg.value);
+        if (err)
+            return mp_obj_new_int(err);
+    } while (reg.ready);
+    reg.show = 1;
+    reg.source = 2;
+    reg.ready = 1;
+    reg.auto_reload = auto_reload;
+    err = self->stream_->Set(self, kRegImageConfig, reg.value);
+
+    return mp_obj_new_int(err);
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR(mp_Sentry_ScreenFill_obj, 6, mp_Sentry_ScreenFill);
+
 MP_STATIC const mp_rom_map_elem_t mp_Sentry_locals_dict_table[] = {
     {MP_ROM_QSTR(MP_QSTR_SetDebug), MP_ROM_PTR(&mp_Sentry_SetDebug_obj)},
     {MP_ROM_QSTR(MP_QSTR_rows), MP_ROM_PTR(&mp_Sentry_rows_obj)},
     {MP_ROM_QSTR(MP_QSTR_cols), MP_ROM_PTR(&mp_Sentry_cols_obj)},
+    {MP_ROM_QSTR(MP_QSTR_Get), MP_ROM_PTR(&mp_Sentry_Get_obj)},
+    {MP_ROM_QSTR(MP_QSTR_Set), MP_ROM_PTR(&mp_Sentry_Set_obj)},
     {MP_ROM_QSTR(MP_QSTR_SensorInit), MP_ROM_PTR(&mp_Sentry_SensorInit_obj)},
     {MP_ROM_QSTR(MP_QSTR_begin), MP_ROM_PTR(&mp_Sentry_begin_obj)},
     {MP_ROM_QSTR(MP_QSTR_VisionBegin), MP_ROM_PTR(&mp_Sentry_VisionBegin_obj)},
@@ -1192,12 +1957,20 @@ MP_STATIC const mp_rom_map_elem_t mp_Sentry_locals_dict_table[] = {
     {MP_ROM_QSTR(MP_QSTR_SensorSetDefault), MP_ROM_PTR(&mp_Sentry_SensorSetDefault_obj)},
     {MP_ROM_QSTR(MP_QSTR_LedSetColor), MP_ROM_PTR(&mp_Sentry_LedSetColor_obj)},
     {MP_ROM_QSTR(MP_QSTR_CameraSetAwb), MP_ROM_PTR(&mp_Sentry_CameraSetAwb_obj)},
+    {MP_ROM_QSTR(MP_QSTR_UartSetBaudrate), MP_ROM_PTR(&mp_Sentry_UartSetBaudrate_obj)},
+    {MP_ROM_QSTR(MP_QSTR_Snapshot), MP_ROM_PTR(&mp_Sentry_Snapshot_obj)},
+    {MP_ROM_QSTR(MP_QSTR_UserImageCoordinateConfig), MP_ROM_PTR(&mp_Sentry_UserImageCoordinateConfig_obj)},
+    {MP_ROM_QSTR(MP_QSTR_ScreenConfig), MP_ROM_PTR(&mp_Sentry_ScreenConfig_obj)},
+    {MP_ROM_QSTR(MP_QSTR_ScreenShow), MP_ROM_PTR(&mp_Sentry_ScreenShow_obj)},
+    {MP_ROM_QSTR(MP_QSTR_ScreenShowFromFlash), MP_ROM_PTR(&mp_Sentry_ScreenShowFromFlash_obj)},
+    {MP_ROM_QSTR(MP_QSTR_ScreenFill), MP_ROM_PTR(&mp_Sentry_ScreenFill_obj)}, 
 };
 MP_STATIC MP_DEFINE_CONST_DICT(mp_Sentry_locals_dict, mp_Sentry_locals_dict_table);
 
 MP_STATIC const mp_obj_type_t mp_Sentry_type = {
     {&mp_type_type},
     .name = MP_QSTR_Sentry,
+    .print = mp_Sentry_print,
     .make_new = mp_Sentry_make_new,
     .locals_dict = (void *)&mp_Sentry_locals_dict,
 };

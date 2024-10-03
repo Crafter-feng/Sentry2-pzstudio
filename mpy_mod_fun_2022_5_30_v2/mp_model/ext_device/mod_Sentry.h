@@ -142,12 +142,14 @@ typedef enum
   kLed2,
   kLedAll,
 } sentry_led_e;
+
 typedef enum
 {
   kSerialMode,
   kI2CMode,
   kUnknownMode,
 } sentry_mode_e;
+
 typedef enum
 {
   kBaud9600 = 0x00,
@@ -159,6 +161,7 @@ typedef enum
   kBaud1152000 = 0x06,
   kBaud2000000 = 0x07,
 } sentry_baudrate_e;
+
 typedef enum
 {
   kWiFiBaud9600 = 0x00,
@@ -170,6 +173,7 @@ typedef enum
   kWiFiBaud3000000 = 0x06,
   kWiFiBaud4000000 = 0x07,
 } sentry_wifi_baudrate_e;
+
 typedef enum
 {
   kStatus,      //!< whether the target is detected
@@ -182,6 +186,7 @@ typedef enum
   kGValue,      //!< G channel value
   kBValue,      //!< B channel value
 } sentry_obj_info_e;
+
 typedef enum
 {
   kZoomDefault = 0,
@@ -191,11 +196,13 @@ typedef enum
   kZoom4 = 4,
   kZoom5 = 5,
 } sentry_camera_zoom_e;
+
 typedef enum
 {
   kFPSNormal = 0, //!< 25FPS mode
   kFPSHigh = 1,   //!< 50FPS mode
 } sentry_camera_fps_e;
+
 typedef enum
 {
   kAutoWhiteBalance = 0, //!< auto white balance mode
@@ -204,11 +211,13 @@ typedef enum
   kYellowLight = 3,      //!< yellow light mode
   kWhiteBalanceCalibrating,
 } sentry_camera_white_balance_e;
+
 typedef enum
 {
   kAbsoluteCoordinate = 0,
   kPercentageCoordinate = 1,
 } sentry_coordinate_type_e;
+
 typedef enum
 {
   kSnapshot2SD = 1,
@@ -216,11 +225,13 @@ typedef enum
   kSnapshot2Usb = 4,
   kSnapshot2Wifi = 8,
 } sentry_snapshot_dest_e;
+
 typedef enum
 {
   kSnapshotFromCamera = 0,
   kSnapshotFromScreen = 1,
 } sentry_snapshot_src_e;
+
 typedef enum
 {
   kSnapshotTypeRGB565 = 2,

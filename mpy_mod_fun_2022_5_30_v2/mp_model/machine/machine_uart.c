@@ -35,25 +35,10 @@
 #include "py/stream.h"
 #include "py/mperrno.h"
 #include "modmachine.h"
+#include "machine_uart.h"
 #include "hal_pz_uart.h"
 
 
-
-typedef struct _machine_uart_obj_t {
-    mp_obj_base_t base;
-	/* 串口号 */
-    int8_t uart_num;
-	/* 波特率 */
-	uint32_t baudrate;
-	/* 数据位 */
-    uint8_t bits;
-	/* 校验位 */
-    uint8_t parity;
-	/* 停止位 */
-    uint8_t stop;
-	/*  */
-    uint16_t timeout;
-} machine_uart_obj_t;
 
 MP_STATIC const char *_parity_name[] = {"None", "1", "0"};
 

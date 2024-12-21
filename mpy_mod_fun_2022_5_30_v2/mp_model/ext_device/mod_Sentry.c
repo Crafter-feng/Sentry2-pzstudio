@@ -893,7 +893,7 @@ MP_STATIC sentry_stream_base_t *mp_SentryUARTStream_make_new(mp_obj_base_t *uart
 
     self->Get = SentryUartMethodGet;
     self->Set = SentryUartMethodSet;
-    self->SetParam = SentryI2CStreamSetParam;
+    self->SetParam = SentryUartStreamSetParam;
     self->Read = SentryUartMethodRead;
     self->Write = SentryUARTStreamWrite;
 
@@ -1513,7 +1513,21 @@ MP_STATIC mp_obj_t mp_Sentry_GetValue(size_t n_args, const mp_obj_t *args)
     return mp_obj_new_int(mp_Sentry_read(self, vision_type, obj_info, obj_id));
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_Sentry_GetValue_obj, 3, 4, mp_Sentry_GetValue);
+// uint8_t SentryFactory::VisionSetMode(int vision_type, int mode) {
+//   sentry_err_t err;
+//   sentry_vision_conf2_t vision_config2;
 
+//   err = stream_->Set(kRegVisionId, vision_type);
+//   if (err) return err;
+//   err =
+//       stream_->Get(kRegVisionConfig2, &vision_config2.value);
+//   if (err) return err;
+//   if (vision_config2.mode != mode) {
+//     vision_config2.mode = mode;
+//     err = stream_->Set(kRegVisionConfig2, vision_config2.value);
+//   }
+//   return err;
+// }
 MP_STATIC mp_obj_t mp_Sentry_VisionSetMode(mp_obj_t self_obj, mp_obj_t vision_type_obj, mp_obj_t mode_obj)
 {
 
@@ -1526,12 +1540,12 @@ MP_STATIC mp_obj_t mp_Sentry_VisionSetMode(mp_obj_t self_obj, mp_obj_t vision_ty
 
     sentry_err_t err;
     sentry_vision_conf2_t vision_config2;
-    err = self->stream_->Set(kRegVisionId, vision_type);
+    err = self->stream_->Get(self->stream_, kRegVisionId, &vision_config2.value);
     if (err)
         return mp_obj_new_int(err);
     if (vision_config2.mode != mode){
         vision_config2.mode = mode;
-        err = self->stream_->Set(kRegVisionConfig2, vision_config2.value);
+        err = self->stream_->Set(self->stream_, kRegVisionConfig2, vision_config2.value);
     }
     return mp_obj_new_int(err);
 }
@@ -1748,7 +1762,7 @@ MP_STATIC mp_obj_t mp_Sentry_Snapshot(size_t n_args, const mp_obj_t *args)
 
     if (self->mode_ != kSerialMode)
     {
-        return SENTRY_FAIL;
+        return mp_obj_new_int(SENTRY_FAIL);
     }
 
     if (!self->stream_)
@@ -1757,7 +1771,7 @@ MP_STATIC mp_obj_t mp_Sentry_Snapshot(size_t n_args, const mp_obj_t *args)
     err = self->stream_->Get(self->stream_, kRegSnapshot, &reg.value);
     if (err)
     {
-        return err;
+        return mp_obj_new_int(err);
     }
     reg.value &= 0xF0;
     reg.value |= image_dest;
@@ -1953,7 +1967,7 @@ MP_STATIC mp_obj_t mp_Sentry_ScreenFill(size_t n_args, const mp_obj_t *args)
     reg.source = 2;
     reg.ready = 1;
     reg.auto_reload = auto_reload;
-    err = self->stream_->Set(self, kRegImageConfig, reg.value);
+    err = self->stream_->Set(self->stream_, kRegImageConfig, reg.value);
 
     return mp_obj_new_int(err);
 }

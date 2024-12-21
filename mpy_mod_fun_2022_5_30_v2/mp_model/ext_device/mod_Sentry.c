@@ -1514,6 +1514,29 @@ MP_STATIC mp_obj_t mp_Sentry_GetValue(size_t n_args, const mp_obj_t *args)
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_Sentry_GetValue_obj, 3, 4, mp_Sentry_GetValue);
 
+MP_STATIC mp_obj_t mp_Sentry_VisionSetMode(mp_obj_t self_obj, mp_obj_t vision_type_obj, mp_obj_t mode_obj)
+{
+
+    mp_obj_Sentry_t *self = (mp_obj_Sentry_t *)MP_OBJ_TO_PTR(self_obj);
+    mp_int_t vision_type = mp_obj_get_int(vision_type_obj);
+    mp_int_t mode = mp_obj_get_int(mode_obj);
+
+    if (!self->stream_)
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Sentry not begein!"));
+
+    sentry_err_t err;
+    sentry_vision_conf2_t vision_config2;
+    err = self->stream_->Set(kRegVisionId, vision_type);
+    if (err)
+        return mp_obj_new_int(err);
+    if (vision_config2.mode != mode){
+        vision_config2.mode = mode;
+        err = self->stream_->Set(kRegVisionConfig2, vision_config2.value);
+    }
+    return mp_obj_new_int(err);
+}
+MP_DEFINE_CONST_FUN_OBJ_3(mp_Sentry_VisionSetMode_obj, mp_Sentry_VisionSetMode);
+
 MP_STATIC mp_obj_t mp_Sentry_VisionSetStatus(mp_obj_t self_obj, mp_obj_t vision_type_obj, mp_obj_t enable_obj)
 {
 
@@ -1949,6 +1972,7 @@ MP_STATIC const mp_rom_map_elem_t mp_Sentry_locals_dict_table[] = {
     {MP_ROM_QSTR(MP_QSTR_GetValue), MP_ROM_PTR(&mp_Sentry_GetValue_obj)},
     {MP_ROM_QSTR(MP_QSTR_SetParamNum), MP_ROM_PTR(&mp_Sentry_SetParamNum_obj)},
     {MP_ROM_QSTR(MP_QSTR_SetParam), MP_ROM_PTR(&mp_Sentry_SetParam_obj)},
+    {MP_ROM_QSTR(MP_QSTR_VisionSetMode), MP_ROM_PTR(&mp_Sentry_VisionSetMode_obj)},
     {MP_ROM_QSTR(MP_QSTR_VisionSetStatus), MP_ROM_PTR(&mp_Sentry_VisionSetStatus_obj)},
     {MP_ROM_QSTR(MP_QSTR_VisionSetDefault), MP_ROM_PTR(&mp_Sentry_VisionSetDefault_obj)},
     {MP_ROM_QSTR(MP_QSTR_VisionGetStatus), MP_ROM_PTR(&mp_Sentry_VisionGetStatus_obj)},

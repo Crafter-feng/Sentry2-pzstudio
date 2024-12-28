@@ -238,7 +238,12 @@ typedef enum
   kSnapshotTypeJPEG = 4,
   kSnapshotTypeJPEGBase64 = 5,
 } sentry_snapshot_type_e;
-
+typedef enum {
+  kLevelDefault         = 0,
+  kLevelSpeed           = 1,      //!< speed first mode
+  kLevelBalance         = 2,      //!< balance mode
+  kLevelAccuracy        = 3,      //!< accuracy first mode
+} sentry_vision_level_e;
 /* register type */
 typedef union
 {
@@ -292,7 +297,13 @@ typedef union
   };
   unsigned char vision_config_reg_value;
 } sentry_vision_conf1_t;
-
+typedef union {
+  struct {
+    unsigned char mode : 4;
+    sentry_vision_level_e level : 4;
+  };
+  unsigned char value;
+} sentry_vision_conf2_t;
 typedef union
 {
   struct

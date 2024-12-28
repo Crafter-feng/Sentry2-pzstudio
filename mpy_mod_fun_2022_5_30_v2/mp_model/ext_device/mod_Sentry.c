@@ -36,6 +36,10 @@
 #define SENTRY_DEBUG(_fmt, arg...)
 #endif
 
+#define SENTRY_ERROR(_fmt, arg...) \
+    if (LOG_OUTPUT > 2)            \
+    printf("Sentry ERR:"_fmt, ##arg)
+
 MP_STATIC uint8_t LOG_OUTPUT = 0;
 
 MP_STATIC const mp_rom_map_elem_t mp_sentry_obj_info_e_locals_dict_table[] = {
@@ -250,7 +254,7 @@ MP_STATIC uint8_t I2CRead(mp_machine_i2c_obj_t *i2c, uint8_t dev_addr, uint8_t r
 
     if (ret != HI_ERR_SUCCESS)
     {
-        printf("[R:%02x, ERR W:%02x addr:%02x],", reg_address, ret, dev_addr);
+        SENTRY_ERROR("[R:%02x, ERR W:%02x addr:%02x]\n", reg_address, ret, dev_addr);
         return SENTRY_WRITE_TIMEOUT;
     }
 
@@ -258,12 +262,12 @@ MP_STATIC uint8_t I2CRead(mp_machine_i2c_obj_t *i2c, uint8_t dev_addr, uint8_t r
 
     if (ret != HI_ERR_SUCCESS)
     {
-        printf("[R:%02x, ERR R:%02x addr:%02x],", reg_address, ret, dev_addr);
+        SENTRY_ERROR("[R:%02x, ERR R:%02x addr:%02x]\n", reg_address, ret, dev_addr);
         return SENTRY_READ_TIMEOUT;
     }
 
     // Debug Output
-    SENTRY_DEBUG("[R:%02x, %02x],", reg_address, *temp);
+    SENTRY_DEBUG("[R:%02x, %02x]\n", reg_address, *temp);
 
     return SENTRY_OK;
 }
@@ -276,11 +280,11 @@ MP_STATIC uint8_t I2CWrite(mp_machine_i2c_obj_t *i2c, uint8_t dev_addr, uint8_t 
     ret = hal_pz_i2c_write(i2c->id, dev_addr, buff, 2);
     if (ret != HI_ERR_SUCCESS)
     {
-        printf("[W:%02x,%02x ERR:%02x],", reg_address, value, ret);
+        SENTRY_ERROR("[W:%02x,%02x ERR:%02x]\n", reg_address, value, ret);
         return SENTRY_WRITE_TIMEOUT;
     }
     // Debug Output
-    SENTRY_DEBUG("[W:%02x,%02x],", reg_address, value);
+    SENTRY_DEBUG("[W:%02x,%02x]\n", reg_address, value);
 
     return SENTRY_OK;
 }
@@ -939,7 +943,8 @@ MP_STATIC bool free_vision_buffer(mp_obj_Sentry_t *self, int vision_type)
     return true;
 }
 
-MP_STATIC mp_obj_t mp_Sentry_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+MP_STATIC mp_obj_t mp_Sentry_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind)
+{
     mp_obj_Sentry_t *self = MP_OBJ_TO_PTR(self_in);
 
     mp_printf(print, "Sentry(addr: 0x%x, id: 0x%x, qr: %d, max: %d)",
@@ -1033,7 +1038,7 @@ MP_STATIC sentry_err_t mp_Sentry_ProtocolVersionCheck(mp_obj_Sentry_t *self)
         // Major.Minor，若版本不对发出警告。 err =
         // self->stream_->Get(self->stream_, kRegFirmwareVersion, &firmware_version); if (!err &&
         // firmware_version > SENTRY_FIRMWARE_VERSION) {
-        //   printf("Hardware firmware version is latter than library support
+        //   SENTRY_ERROR("Hardware firmware version is latter than library support
         //   firmware version,\n"
         //          "it may cause");
         // }
@@ -1513,21 +1518,7 @@ MP_STATIC mp_obj_t mp_Sentry_GetValue(size_t n_args, const mp_obj_t *args)
     return mp_obj_new_int(mp_Sentry_read(self, vision_type, obj_info, obj_id));
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_Sentry_GetValue_obj, 3, 4, mp_Sentry_GetValue);
-// uint8_t SentryFactory::VisionSetMode(int vision_type, int mode) {
-//   sentry_err_t err;
-//   sentry_vision_conf2_t vision_config2;
 
-//   err = stream_->Set(kRegVisionId, vision_type);
-//   if (err) return err;
-//   err =
-//       stream_->Get(kRegVisionConfig2, &vision_config2.value);
-//   if (err) return err;
-//   if (vision_config2.mode != mode) {
-//     vision_config2.mode = mode;
-//     err = stream_->Set(kRegVisionConfig2, vision_config2.value);
-//   }
-//   return err;
-// }
 MP_STATIC mp_obj_t mp_Sentry_VisionSetMode(mp_obj_t self_obj, mp_obj_t vision_type_obj, mp_obj_t mode_obj)
 {
 
@@ -1543,7 +1534,8 @@ MP_STATIC mp_obj_t mp_Sentry_VisionSetMode(mp_obj_t self_obj, mp_obj_t vision_ty
     err = self->stream_->Get(self->stream_, kRegVisionId, &vision_config2.value);
     if (err)
         return mp_obj_new_int(err);
-    if (vision_config2.mode != mode){
+    if (vision_config2.mode != mode)
+    {
         vision_config2.mode = mode;
         err = self->stream_->Set(self->stream_, kRegVisionConfig2, vision_config2.value);
     }
@@ -1739,7 +1731,7 @@ MP_STATIC mp_obj_t mp_Sentry_UartSetBaudrate(mp_obj_t self_obj, mp_obj_t baud_ob
 
     if (!self->stream_)
         mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Sentry not begein!"));
-        
+
     err = self->stream_->Get(self->stream_, kRegUart, &uart_config.uart_reg_value);
     if (uart_config.baudrate != baud)
     {
@@ -1767,7 +1759,7 @@ MP_STATIC mp_obj_t mp_Sentry_Snapshot(size_t n_args, const mp_obj_t *args)
 
     if (!self->stream_)
         mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Sentry not begein!"));
-        
+
     err = self->stream_->Get(self->stream_, kRegSnapshot, &reg.value);
     if (err)
     {
@@ -1802,7 +1794,7 @@ MP_STATIC mp_obj_t mp_Sentry_UserImageCoordinateConfig(size_t n_args, const mp_o
 
     if (!self->stream_)
         mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Sentry not begein!"));
-        
+
     err = self->stream_->Set(self->stream_, kRegImageID, image_id);
     if (err)
         return mp_obj_new_int(err);
@@ -1843,7 +1835,7 @@ MP_STATIC mp_obj_t mp_Sentry_ScreenConfig(mp_obj_t self_obj, mp_obj_t enable_obj
 
     reg.enable = enable;
     reg.only_user_image = only_user_image;
-    
+
     if (!self->stream_)
         mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Sentry not begein!"));
 
@@ -1864,7 +1856,7 @@ MP_STATIC mp_obj_t mp_Sentry_ScreenShow(mp_obj_t self_obj, mp_obj_t image_id_obj
 
     if (!self->stream_)
         mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Sentry not begein!"));
-        
+
     err = self->stream_->Set(self->stream_, kRegImageID, image_id);
     if (err)
         return mp_obj_new_int(err);
@@ -1897,7 +1889,7 @@ MP_STATIC mp_obj_t mp_Sentry_ScreenShowFromFlash(mp_obj_t self_obj, mp_obj_t ima
 
     if (!self->stream_)
         mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Sentry not begein!"));
-        
+
     err = self->stream_->Set(self->stream_, kRegImageID, image_id);
     if (err)
         return mp_obj_new_int(err);
@@ -1939,10 +1931,9 @@ MP_STATIC mp_obj_t mp_Sentry_ScreenFill(size_t n_args, const mp_obj_t *args)
     {
         return mp_obj_new_int(SENTRY_FAIL);
     }
-    
+
     if (!self->stream_)
         mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Sentry not begein!"));
-
 
     err = self->stream_->Set(self->stream_, kRegImageID, image_id);
     if (err)
@@ -2001,7 +1992,7 @@ MP_STATIC const mp_rom_map_elem_t mp_Sentry_locals_dict_table[] = {
     {MP_ROM_QSTR(MP_QSTR_ScreenConfig), MP_ROM_PTR(&mp_Sentry_ScreenConfig_obj)},
     {MP_ROM_QSTR(MP_QSTR_ScreenShow), MP_ROM_PTR(&mp_Sentry_ScreenShow_obj)},
     {MP_ROM_QSTR(MP_QSTR_ScreenShowFromFlash), MP_ROM_PTR(&mp_Sentry_ScreenShowFromFlash_obj)},
-    {MP_ROM_QSTR(MP_QSTR_ScreenFill), MP_ROM_PTR(&mp_Sentry_ScreenFill_obj)}, 
+    {MP_ROM_QSTR(MP_QSTR_ScreenFill), MP_ROM_PTR(&mp_Sentry_ScreenFill_obj)},
 };
 MP_STATIC MP_DEFINE_CONST_DICT(mp_Sentry_locals_dict, mp_Sentry_locals_dict_table);
 
